@@ -27,7 +27,7 @@ const GenerationOutput: React.FC<GenerationOutputProps> = ({ analysisData }) => 
     <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 h-full flex flex-col space-y-4">
       <h2 className="text-xl font-semibold text-slate-200">Output</h2>
       
-      <div>
+      <div id="icl-text-container">
         <h3 className="text-lg font-semibold text-slate-300 mb-2">In-Context Learning Text</h3>
         <ICLHighlightedText
           text={currentText}
@@ -45,7 +45,7 @@ const GenerationOutput: React.FC<GenerationOutputProps> = ({ analysisData }) => 
         <TokenAttentionVisualizer tokens={tokens} attentionMatrix={attentionMatrix} />
       </div>
 
-      <div>
+      <div id="top-predictions-container">
         <h3 className="text-lg font-semibold text-slate-300 mb-2">Top Predictions</h3>
         <div className="bg-slate-800 border border-slate-700 rounded-md p-3 space-y-1">
           {topPredictions.map((pred: any, index: number) => (

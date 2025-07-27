@@ -7,10 +7,11 @@ interface VisualizationPanelProps {
   analysisData: any;
   fullHistory: any[];
   onStepSelect: (step: number) => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, fullHistory, onStepSelect }) => {
-  const [activeTab, setActiveTab] = useState('pattern-timeline');
+const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, fullHistory, onStepSelect, activeTab, setActiveTab }) => {
   const [selectedLayer, setSelectedLayer] = useState('layer_0');
   const [selectedColorscale, setSelectedColorscale] = useState('Viridis');
   const graphRef = useRef(null);
@@ -896,7 +897,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
 
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 flex flex-col h-full">
-      <div className="flex border-b border-slate-700 mb-4">
+      <div className="flex border-b border-slate-700 mb-4" id="visualization-tabs">
         {tabs.map(tab => (
           <button
             key={tab.id}

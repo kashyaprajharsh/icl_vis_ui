@@ -53,12 +53,24 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
   const [modelName, setModelName] = useState('gpt2-medium');
   const [samplePatterns, setSamplePatterns] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPattern, setSelectedPattern] = useState('qa');
+  const [showWelcomeMessage, setShowWelcomeMessage] = useState(false);
 
   useEffect(() => {
-    fetch('https://gpt2-viz-backend.thankfulsky-a88ee13c.eastus.azurecontainerapps.io/sample-patterns')
+    // Connect to the deployed Azure Container Apps backend
+    //fetch('https://gpt2-viz-backend.thankfulsky-a88ee13c.eastus.azurecontainerapps.io/sample-patterns')
+    fetch('http://localhost:8000/sample-patterns')
       .then(res => res.json())
       .then(data => {
         setSamplePatterns(data.patterns);
+        // Auto-populate with the "qa" pattern when patterns load
+        if (data.patterns.qa) {
+          setPrompt(data.patterns.qa.prompt);
+          setSelectedPattern('qa');
+          setShowWelcomeMessage(true);
+          // Hide welcome message after 5 seconds
+          setTimeout(() => setShowWelcomeMessage(false), 5000);
+        }
         setIsLoading(false);
       })
       .catch(err => {
@@ -77,9 +89,8 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
   };
 
   const handleUsePattern = () => {
-    const select = document.getElementById('sample-patterns-select') as HTMLSelectElement;
-    if (select && samplePatterns[select.value]) {
-      setPrompt(samplePatterns[select.value].prompt);
+    if (selectedPattern && samplePatterns[selectedPattern]) {
+      setPrompt(samplePatterns[selectedPattern].prompt);
     }
   };
 
@@ -107,7 +118,13 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
       </div>
 
       <div className="relative">
-        <select id="sample-patterns-select" disabled={isLoading} className="w-full appearance-none bg-slate-800 border border-slate-600 text-slate-300 rounded-md p-2 pr-8">
+        <select 
+          id="sample-patterns-select" 
+          value={selectedPattern}
+          onChange={e => setSelectedPattern(e.target.value)}
+          disabled={isLoading} 
+          className="w-full appearance-none bg-slate-800 border border-slate-600 text-slate-300 rounded-md p-2 pr-8"
+        >
           {Object.entries(samplePatterns).map(([key, value]: [string, any]) => (
             <option key={key} value={key}>{value.name}</option>
           ))}
@@ -131,7 +148,7 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
         <input type="range" id="temperature" min="0" max="1" step="0.01" value={temperature} onChange={e => setTemperature(parseFloat(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
       </div>
 
-      <button onClick={handleGenerateClick} className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-md w-full flex items-center justify-center transition">
+      <button id="generate-button" onClick={handleGenerateClick} className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-md w-full flex items-center justify-center transition">
         <FaPlay className="mr-2" /> Generate
       </button>
 
