@@ -215,6 +215,6 @@ MIT License - see LICENSE file for details
 
 ## 🙏 Acknowledgments
 
-- Anthropic's mechanistic interpretability research team
-- Hugging Face for model hosting
-- The open-source ML visualization community
+- Anthropic's mechanistic interpretability research team.
+- Hugging Face for model hosting.
+- The open-source ML visualization community.
