@@ -32,7 +32,7 @@ export default function Home() {
   useEffect(() => {
     const connectWebSocket = () => {
       // Connect to the deployed Azure Container Apps backend
-      const ws = new WebSocket("wss://gpt2-viz-backend.thankfulsky-a88ee13c.eastus.azurecontainerapps.io/ws/generate");
+      const ws = new WebSocket("wss://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/ws/generate");
       //const ws = new WebSocket("ws://localhost:8000/ws/generate");
 
       ws.onopen = () => setStatus("Connected");
