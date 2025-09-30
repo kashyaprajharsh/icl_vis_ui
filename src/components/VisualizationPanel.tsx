@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Plot from 'react-plotly.js';
 import { Network } from 'vis-network';
 import InductionHeadVisualizer from './InductionHeadVisualizer';
+import 'vis-network/styles/vis-network.css'; // Required for default hover tooltips
 
 interface VisualizationPanelProps {
   analysisData: any;
@@ -13,7 +14,9 @@ interface VisualizationPanelProps {
 
 const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, fullHistory, onStepSelect, activeTab, setActiveTab }) => {
   const [selectedLayer, setSelectedLayer] = useState('layer_0');
-  const [selectedColorscale, setSelectedColorscale] = useState('Viridis');
+  const [selectedColorscale, setSelectedColorscale] = useState('Blues');
+  // User-adjustable minimum edge strength (fraction of max weight)
+  const [edgeThreshold, setEdgeThreshold] = useState(0.2);
   const graphRef = useRef(null);
   const networkRef = useRef<Network | null>(null);
 
@@ -29,6 +32,22 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
         }
 
         const maxWeight = rawEdges.length > 0 ? Math.max(...rawEdges.map((e: any) => e.value), 0) : 0;
+
+        // --- Calculate per-node statistics for richer tooltips ---
+        interface NodeStats { inDeg: number; outDeg: number; inW: number; outW: number; }
+        const stats: Record<string, NodeStats> = {};
+        rawNodes.forEach((n: any) => {
+          stats[n.id] = { inDeg: 0, outDeg: 0, inW: 0, outW: 0 };
+        });
+        rawEdges.forEach((edge: any) => {
+          if (!stats[edge.from]) stats[edge.from] = { inDeg: 0, outDeg: 0, inW: 0, outW: 0 };
+          if (!stats[edge.to]) stats[edge.to] = { inDeg: 0, outDeg: 0, inW: 0, outW: 0 };
+          stats[edge.from].outDeg += 1;
+          stats[edge.from].outW += edge.value;
+          stats[edge.to].inDeg += 1;
+          stats[edge.to].inW += edge.value;
+        });
+
         const seqLen = rawNodes.length;
 
         const nodes = rawNodes.map((node: any, index: number) => {
@@ -39,9 +58,11 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
           const g = Math.round((1 - ratio) * startColor.g + ratio * endColor.g);
           const b = Math.round((1 - ratio) * startColor.b + ratio * endColor.b);
           
+          const s = stats[node.id];
           return {
             id: node.id,
             label: node.label,
+            title: `Token ${index}: ${node.label}\nIncoming: ${s.inDeg} (Σ ${s.inW.toFixed(2)})\nOutgoing: ${s.outDeg} (Σ ${s.outW.toFixed(2)})`,
             color: {
               background: `rgb(${r}, ${g}, ${b})`,
               border: '#1e293b',
@@ -61,46 +82,47 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
           };
         });
 
-        const edges = rawEdges.map((edge: any) => {
-          const threshold = 0.1; // Same as backend
-          let color = '#64748b'; // slate-500
-          let width = 1;
-          
-          if (maxWeight > threshold && edge.value > threshold) {
-            const ratio = Math.min((edge.value - threshold) / (maxWeight - threshold), 1);
+        // Apply threshold chosen by the user to reduce hub-and-spoke effect
+        const adaptiveThreshold = maxWeight * edgeThreshold;
+        
+        const edges = rawEdges
+          .filter((edge: any) => edge.value > adaptiveThreshold) // Filter first
+          .sort((a: any, b: any) => b.value - a.value) // Sort by strength
+          .slice(0, Math.min(50, rawNodes.length * 3)) // Limit to top edges
+          .map((edge: any) => {
+            const ratio = Math.min((edge.value - adaptiveThreshold) / (maxWeight - adaptiveThreshold), 1);
             const startColor = { r: 100, g: 116, b: 139 }; // slate-500
             const endColor = { r: 34, g: 211, b: 238 };   // cyan-400
             const r = Math.round((1 - ratio) * startColor.r + ratio * endColor.r);
             const g = Math.round((1 - ratio) * startColor.g + ratio * endColor.g);
             const b = Math.round((1 - ratio) * startColor.b + ratio * endColor.b);
-            color = `rgb(${r}, ${g}, ${b})`;
-            width = 1 + ratio * 3; // Scale width from 1 to 4
-          }
-          
-          return {
-            from: edge.from,
-            to: edge.to,
-            value: edge.value,
-            color: {
-              color: color,
-              highlight: '#38bdf8',
-              opacity: 0.8
-            },
-            width: width,
-            arrows: {
-              to: {
+            const color = `rgb(${r}, ${g}, ${b})`;
+            const width = 1 + ratio * 3; // Scale width from 1 to 4
+            
+            return {
+              from: edge.from,
+              to: edge.to,
+              value: edge.value,
+              color: {
+                color: color,
+                highlight: '#38bdf8',
+                opacity: 0.8
+              },
+              width: width,
+              arrows: {
+                to: {
+                  enabled: true,
+                  scaleFactor: 0.8
+                }
+              },
+              smooth: {
                 enabled: true,
-                scaleFactor: 0.8
-              }
-            },
-            smooth: {
-              enabled: true,
-              type: 'cubicBezier',
-              roundness: 0.3
-            },
-            title: `Attention: ${edge.value.toFixed(3)}`
-          };
-        });
+                type: 'cubicBezier',
+                roundness: 0.3
+              },
+              title: `From: ${rawNodes[edge.from]?.label || edge.from}\nTo: ${rawNodes[edge.to]?.label || edge.to}\nAttention: ${edge.value.toFixed(3)}`
+            };
+          });
 
         const data = { nodes, edges };
         
@@ -131,16 +153,16 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
             enabled: true,
             solver: 'forceAtlas2Based',
             forceAtlas2Based: {
-              gravitationalConstant: -50,
-              centralGravity: 0.01,
-              springLength: 100,
-              springConstant: 0.08,
-              damping: 0.4,
-              avoidOverlap: 0.5
+              gravitationalConstant: -80,  // Stronger repulsion
+              centralGravity: 0.005,       // Less central pull
+              springLength: 150,           // Longer springs
+              springConstant: 0.05,        // Weaker springs
+              damping: 0.6,                // More damping
+              avoidOverlap: 1.0            // Better node separation
             },
-            maxVelocity: 50,
+            maxVelocity: 30,
             minVelocity: 0.1,
-            stabilization: { iterations: 150 }
+            stabilization: { iterations: 200 }
           },
           interaction: {
             hover: true,
@@ -186,7 +208,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
         }
       }
     }
-  }, [analysisData, activeTab]);
+  }, [analysisData, activeTab, edgeThreshold]);
 
   const renderContent = () => {
     if (!analysisData) {
@@ -198,13 +220,20 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
         const heatmapData = analysisData.attention_heatmap;
         const layers = Object.keys(heatmapData);
         const z = heatmapData[selectedLayer] || heatmapData[layers[0]];
-        const labels = analysisData.tokens.map((t: any) => t.text);
+        const labels = analysisData.tokens.map((t: any, index: number) => {
+          let tokenText = t.text || '';
+          
+          // Handle special characters
+          if (tokenText === '\n') return '\\n';
+          if (tokenText === '\t') return '\\t';
+          if (tokenText.trim() === '') return `[${index}]`;
+          
+          // Clean and truncate for better display
+          tokenText = tokenText.trim();
+          return tokenText.length > 10 ? tokenText.substring(0, 8) + '..' : tokenText;
+        });
         const colorScales = [
-          { value: 'Viridis', name: 'Viridis (Purple-Green)' },
-          { value: 'Blues', name: 'Blues (Light-Dark Blue)' },
-          { value: 'Reds', name: 'Reds (Light-Dark Red)' },
-          { value: 'Plasma', name: 'Plasma (Purple-Pink-Yellow)' },
-          { value: 'Hot', name: 'Hot (Black-Red-Yellow)' }
+          { value: 'Blues', name: 'Blues' }
         ];
         
         const currentLayerNum = selectedLayer.replace('layer_', '');
@@ -219,8 +248,8 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                   <h4 className="text-lg font-semibold text-slate-200 mb-2">Attention Heatmap - Who's Talking to Whom?</h4>
                   <div className="text-sm text-slate-300 space-y-2">
                     <p>
-                      This heatmap shows <strong>which words the AI is paying attention to</strong> when generating each new word. 
-                      Brighter colors mean stronger attention.
+                      This heatmap shows <strong>which words the AI is paying attention to</strong> when generating each new word.
+                      Lighter blues indicate stronger attention, and darker blues indicate weaker attention (see the colorbar).
                     </p>
                     <div className="grid md:grid-cols-2 gap-3 mt-3">
                       <div className="flex items-center gap-2">
@@ -233,11 +262,11 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-lg">🌈</span>
-                        <span><strong>Bright colors:</strong> Strong attention connections</span>
+                        <span><strong>Lighter blues:</strong> Strong attention connections</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-lg">🔲</span>
-                        <span><strong>Dark areas:</strong> Weak/no attention</span>
+                        <span><strong>Darker areas:</strong> Weak/no attention</span>
                       </div>
                     </div>
                   </div>
@@ -272,6 +301,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                 >
                   {colorScales.map(scale => <option key={scale.value} value={scale.value}>{scale.name}</option>)}
                 </select>
+                <span className="text-xs text-slate-400">(Lighter = stronger)</span>
               </div>
             </div>
 
@@ -283,31 +313,39 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                 type: 'heatmap', 
                 colorscale: selectedColorscale, 
                 reversescale: true,
-                hovertemplate: 'From: %{x}<br>To: %{y}<br>Attention: %{z:.3f}<extra></extra>'
+                colorbar: {
+                  title: { text: 'Attention', side: 'right' },
+                  tickfont: { color: '#94a3b8' },
+                  outlinecolor: '#334155'
+                },
+                hovertemplate: 'From: %{y}<br>To: %{x}<br>Attention: %{z:.3f}<extra></extra>'
               }]}
               layout={{
                 title: { 
                   text: `AI Attention Patterns - Layer ${parseInt(currentLayerNum) + 1}`, 
-                  font: { color: '#e2e8f0', size: 18 } 
+                  font: { color: '#e2e8f0', size: 16 } 
                 },
                 xaxis: { 
-                  title: { text: 'Words Being Looked At', font: { color: '#94a3b8' } },
+                  title: { text: 'Words Being Looked At', font: { color: '#94a3b8', size: 12 } },
                   side: 'top', 
-                  tickfont: { color: '#94a3b8' }, 
-                  automargin: true 
+                  tickfont: { color: '#94a3b8', size: 9 }, 
+                  automargin: true,
+                  tickangle: -45,
+                  showticklabels: true
                 },
                 yaxis: { 
-                  title: { text: 'Current Word Position', font: { color: '#94a3b8' } },
+                  title: { text: 'Current Word Position', font: { color: '#94a3b8', size: 12 } },
                   autorange: 'reversed', 
-                  tickfont: { color: '#94a3b8' }, 
-                  automargin: true 
+                  tickfont: { color: '#94a3b8', size: 9 }, 
+                  automargin: true,
+                  showticklabels: true
                 },
                 paper_bgcolor: '#1e293b',
                 plot_bgcolor: '#1e293b',
                 font: { color: '#e2e8f0' },
-                margin: { l: 120, r: 120, b: 100, t: 120, pad: 4 }
+                margin: { l: 100, r: 40, b: 80, t: 100, pad: 8 }
               }}
-              className="w-full h-[500px]"
+              className="w-full h-[600px]"
             />
 
             {/* Interpretation Guide */}
@@ -319,7 +357,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                 <p><strong>Diagonal line:</strong> Words paying attention to themselves (self-attention)</p>
                 <p><strong>Vertical lines:</strong> Popular words that many others attend to (important context)</p>
                 <p><strong>Horizontal lines:</strong> Words that look at many others (gathering lots of context)</p>
-                <p><strong>Bright clusters:</strong> Groups of related words attending to each other</p>
+                <p><strong>Light clusters:</strong> Groups of related words attending to each other</p>
               </div>
             </div>
           </div>
@@ -361,6 +399,21 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
               </div>
             </div>
 
+            {/* Edge filtering control */}
+            <div className="flex items-center gap-2 mb-2 ml-1">
+              <label className="text-xs text-slate-300 whitespace-nowrap">Min edge strength:</label>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={edgeThreshold}
+                onChange={e => setEdgeThreshold(parseFloat(e.target.value))}
+                className="w-32 accent-cyan-400"
+              />
+              <span className="text-xs text-slate-400 w-10 text-right">{(edgeThreshold * 100).toFixed(0)}%</span>
+            </div>
+
             {/* Graph */}
             <div className="relative">
               <div ref={graphRef} className="w-full h-[450px] border border-slate-700 rounded-md bg-slate-800"></div>
@@ -373,8 +426,9 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                 </div>
                 <div className="space-y-1 text-slate-400">
                   <div>• Drag nodes to explore</div>
-                  <div>• Hover for details</div>
+                  <div>• Hover nodes/edges for details</div>
                   <div>• Zoom with mouse wheel</div>
+                  <div>• Only strongest connections shown</div>
                 </div>
               </div>
             </div>
@@ -731,6 +785,13 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
           (b.incoming_attention + b.outgoing_attention) - (a.incoming_attention + a.outgoing_attention)
         );
 
+        const hubCount = sortedData.filter((item: any) => item.incoming_attention > item.outgoing_attention * 2).length;
+        const scannerCount = sortedData.filter((item: any) => item.outgoing_attention > item.incoming_attention * 2).length;
+        const bridgeCount = sortedData.filter((item: any) => 
+          (item.incoming_attention + item.outgoing_attention) > 1.5 && 
+          Math.abs(item.incoming_attention - item.outgoing_attention) < 0.5
+        ).length;
+
         return (
           <div className="space-y-4">
             {/* Explanation Card */}
@@ -853,24 +914,21 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
             {/* Summary Stats */}
             <div className="grid md:grid-cols-3 gap-4">
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                <h5 className="text-sm font-semibold text-purple-400 mb-1">Hub Tokens</h5>
+                <h5 className="text-sm font-semibold text-purple-400 mb-1">Hub {hubCount === 1 ? 'Token' : 'Tokens'}</h5>
                 <p className="text-xs text-slate-400">
-                  {sortedData.filter((item: any) => item.incoming_attention > item.outgoing_attention * 2).length} tokens act as key context providers
+                  {hubCount} {hubCount === 1 ? 'token' : 'tokens'} act as key context providers
                 </p>
               </div>
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                <h5 className="text-sm font-semibold text-blue-400 mb-1">Scanner Tokens</h5>
+                <h5 className="text-sm font-semibold text-blue-400 mb-1">Scanner {scannerCount === 1 ? 'Token' : 'Tokens'}</h5>
                 <p className="text-xs text-slate-400">
-                  {sortedData.filter((item: any) => item.outgoing_attention > item.incoming_attention * 2).length} tokens actively gather information
+                  {scannerCount} {scannerCount === 1 ? 'token' : 'tokens'} actively gather information
                 </p>
               </div>
               <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                <h5 className="text-sm font-semibold text-green-400 mb-1">Bridge Tokens</h5>
+                <h5 className="text-sm font-semibold text-green-400 mb-1">Bridge {bridgeCount === 1 ? 'Token' : 'Tokens'}</h5>
                 <p className="text-xs text-slate-400">
-                  {sortedData.filter((item: any) => 
-                    (item.incoming_attention + item.outgoing_attention) > 1.5 && 
-                    Math.abs(item.incoming_attention - item.outgoing_attention) < 0.5
-                  ).length} tokens connect different concepts
+                  {bridgeCount} {bridgeCount === 1 ? 'token' : 'tokens'} connect different concepts
                 </p>
               </div>
             </div>
@@ -887,12 +945,12 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
   };
 
   const tabs = [
-    { id: 'attention-heatmap', label: 'Attention Heatmap' },
-    { id: 'attention-graph', label: 'Attention Graph' },
-    { id: 'induction-timeline', label: 'Induction Timeline' },
-    { id: 'strategy-timeline', label: 'Strategy Timeline' },
-    { id: 'token-importance', label: 'Token Importance' },
-    { id: 'induction', label: 'Induction Heads' }
+    { id: 'induction-timeline', label: 'Induction Timeline', tooltip: '📈 Watch ICL strength over time - spikes = learning moments!' },
+    { id: 'attention-heatmap', label: 'Attention Heatmap', tooltip: '🔥 See which tokens connect - bright spots = strong attention' },
+    { id: 'attention-graph', label: 'Attention Graph', tooltip: '🕸️ Network view of attention flow - arrows show connections' },
+    { id: 'strategy-timeline', label: 'Strategy Timeline', tooltip: '📊 How model balances induction vs copying strategies' },
+    { id: 'token-importance', label: 'Token Importance', tooltip: '⭐ Bar charts showing each token\'s role and importance' },
+    { id: 'induction', label: 'Induction Heads', tooltip: '🧠 Which parts of the AI brain are doing pattern recognition' }
   ];
 
   return (
@@ -902,7 +960,8 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 -mb-px font-semibold text-sm rounded-t-md ${activeTab === tab.id ? 'text-sky-400 border-b-2 border-sky-400 bg-slate-800' : 'text-slate-400 border-b-2 border-transparent hover:bg-slate-800'}`}
+            title={tab.tooltip}
+            className={`px-4 py-2 -mb-px font-semibold text-sm rounded-t-md transition-colors ${activeTab === tab.id ? 'text-sky-400 border-b-2 border-sky-400 bg-slate-800' : 'text-slate-400 border-b-2 border-transparent hover:bg-slate-800 hover:text-slate-200'}`}
           >
             {tab.label}
           </button>

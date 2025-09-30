@@ -26,7 +26,7 @@ interface InductionHeadVisualizerProps {
 }
 
 const InductionHeadVisualizer: React.FC<InductionHeadVisualizerProps> = ({ inductionDetails, tokens = [] }) => {
-  const [expandedHead, setExpandedHead] = useState<number | null>(null);
+  const [expandedHeadKey, setExpandedHeadKey] = useState<string | null>(null);
 
   if (!inductionDetails || inductionDetails.length === 0) {
     return (
@@ -63,9 +63,9 @@ const InductionHeadVisualizer: React.FC<InductionHeadVisualizerProps> = ({ induc
   };
 
   const getStrengthDescription = (score: number) => {
-    if (score > 0.5) return { label: "Very Strong", color: "text-emerald-400", bg: "bg-emerald-900/30" };
-    if (score > 0.3) return { label: "Strong", color: "text-blue-400", bg: "bg-blue-900/30" };
-    if (score > 0.1) return { label: "Moderate", color: "text-yellow-400", bg: "bg-yellow-900/30" };
+    if (score > 0.5) return { label: "Very Strong", color: "text-rose-400", bg: "bg-rose-900/30" };
+    if (score > 0.3) return { label: "Strong", color: "text-orange-400", bg: "bg-orange-900/30" };
+    if (score > 0.1) return { label: "Moderate", color: "text-amber-400", bg: "bg-amber-900/30" };
     return { label: "Weak", color: "text-slate-400", bg: "bg-slate-800" };
   };
 
@@ -84,15 +84,16 @@ const InductionHeadVisualizer: React.FC<InductionHeadVisualizerProps> = ({ induc
 
       <div className="space-y-3 max-h-80 overflow-y-auto">
         {sortedDetails.map((detail, index) => {
+          const headKey = `${detail.layer}-${detail.head}`;
           const strength = getStrengthDescription(detail.score);
-          const isExpanded = expandedHead === index;
+          const isExpanded = expandedHeadKey === headKey;
           
           return (
             <div key={index} className={`p-3 rounded-lg border border-slate-600 ${strength.bg} transition-all duration-200`}>
               {/* Main head info */}
               <div 
                 className="flex items-center justify-between cursor-pointer"
-                onClick={() => setExpandedHead(isExpanded ? null : index)}
+                onClick={() => setExpandedHeadKey(isExpanded ? null : headKey)}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -108,9 +109,9 @@ const InductionHeadVisualizer: React.FC<InductionHeadVisualizerProps> = ({ induc
                     <div className="w-full bg-slate-700 rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full transition-all duration-300 ${
-                          strength.label === 'Very Strong' ? 'bg-emerald-400' :
-                          strength.label === 'Strong' ? 'bg-blue-400' :
-                          strength.label === 'Moderate' ? 'bg-yellow-400' : 'bg-slate-400'
+                          strength.label === 'Very Strong' ? 'bg-rose-400' :
+                          strength.label === 'Strong' ? 'bg-orange-400' :
+                          strength.label === 'Moderate' ? 'bg-amber-400' : 'bg-slate-400'
                         }`}
                         style={{ width: `${Math.min(detail.score * 100 / 0.6, 100)}%` }}
                       ></div>
@@ -122,9 +123,7 @@ const InductionHeadVisualizer: React.FC<InductionHeadVisualizerProps> = ({ induc
                   <span className="font-mono text-sm text-slate-400">
                     {detail.score.toFixed(3)}
                   </span>
-                  <span className={`text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-                    ▼
-                  </span>
+                  <span className={`text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
                 </div>
               </div>
 
@@ -136,33 +135,36 @@ const InductionHeadVisualizer: React.FC<InductionHeadVisualizerProps> = ({ induc
               </div>
 
               {/* Expanded details */}
-              {isExpanded && detail.matching_patterns && detail.matching_patterns.length > 0 && (
+              {isExpanded && (
                 <div className="mt-3 pt-3 border-t border-slate-600">
-                  <h4 className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-1">
-                    🎯 Pattern Matches Found
-                  </h4>
-                  <div className="grid gap-2 max-h-32 overflow-y-auto">
-                    {detail.matching_patterns.slice(0, 5).map((pattern, pidx) => (
-                      <div key={pidx} className="flex items-center gap-2 text-xs bg-slate-800 p-2 rounded">
-                        <span className="text-slate-400">Position {pattern.similarity_pos}:</span>
-                        <span className="px-2 py-1 bg-blue-900/50 text-blue-200 rounded font-mono">
-                          "{getTokenText(pattern.similar_token)}"
-                        </span>
-                        <span className="text-slate-400">→</span>
-                        <span className="px-2 py-1 bg-green-900/50 text-green-200 rounded font-mono">
-                          "{getTokenText(pattern.copy_token)}"
-                        </span>
-                        <span className="text-slate-500 ml-auto">
-                          {(pattern.attention_weight * 100).toFixed(1)}% attention
-                        </span>
+                  {detail.matching_patterns && detail.matching_patterns.length > 0 ? (
+                    <>
+                      <h4 className="text-sm font-medium text-slate-200 mb-2 flex items-center gap-1">🎯 Pattern Matches Found</h4>
+                      <div className="grid gap-2 max-h-32 overflow-y-auto">
+                        {detail.matching_patterns.slice(0, 5).map((pattern, pidx) => (
+                          <div key={pidx} className="flex items-center gap-2 text-xs bg-slate-800 p-2 rounded">
+                            <span className="text-slate-400">Position {pattern.similarity_pos}:</span>
+                            <span className="px-2 py-1 bg-blue-900/50 text-blue-200 rounded font-mono">"{getTokenText(pattern.similar_token)}"</span>
+                            <span className="text-slate-400">→</span>
+                            <span className="px-2 py-1 bg-green-900/50 text-green-200 rounded font-mono">"{getTokenText(pattern.copy_token)}"</span>
+                            <span className="text-slate-500 ml-auto">{(pattern.attention_weight * 100).toFixed(1)}% attention</span>
+                          </div>
+                        ))}
+                        {detail.matching_patterns.length > 5 && (
+                          <div className="text-xs text-slate-400 italic">... and {detail.matching_patterns.length - 5} more patterns</div>
+                        )}
                       </div>
-                    ))}
-                    {detail.matching_patterns.length > 5 && (
-                      <div className="text-xs text-slate-400 italic">
-                        ... and {detail.matching_patterns.length - 5} more patterns
-                      </div>
-                    )}
-                  </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-slate-400">
+                      <div className="mb-1">No explicit pattern matches provided for this head.</div>
+                      {detail.formula_info?.pattern_description && (
+                        <div className="bg-slate-800 p-2 rounded border border-slate-700">
+                          <span className="text-slate-300">Possible behavior:</span> {detail.formula_info.pattern_description}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

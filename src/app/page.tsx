@@ -7,6 +7,7 @@ import GenerationControls from "@/components/GenerationControls";
 import GenerationOutput from "@/components/GenerationOutput";
 import Header from "@/components/Header";
 import OnboardingTour from "@/components/OnboardingTour";
+import AutoGuidedTour from "@/components/AutoGuidedTour";
 
 const VisualizationPanel = dynamic(() => import('@/components/VisualizationPanel'), {
   ssr: false,
@@ -23,6 +24,9 @@ export default function Home() {
   // Onboarding state
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
+  
+  // Guided tour state
+  const [showGuidedTour, setShowGuidedTour] = useState(false);
 
   useEffect(() => {
     // Onboarding will now be triggered by the first generation, not on page load.
@@ -32,8 +36,8 @@ export default function Home() {
   useEffect(() => {
     const connectWebSocket = () => {
       // Connect to the deployed Azure Container Apps backend
-      const ws = new WebSocket("wss://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/ws/generate");
-      //const ws = new WebSocket("ws://localhost:8000/ws/generate");
+      //const ws = new WebSocket("wss://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/ws/generate");
+      const ws = new WebSocket("ws://localhost:8000/ws/generate");
 
       ws.onopen = () => setStatus("Connected");
       ws.onclose = () => {
@@ -110,10 +114,40 @@ export default function Home() {
     setShowOnboarding(true);
   };
 
+  const handleStartGuidedTour = () => {
+    setShowGuidedTour(true);
+  };
+
+  const handleCloseGuidedTour = () => {
+    setShowGuidedTour(false);
+  };
+
+  // Function to trigger generation from the guided tour
+  const handleGuidedTourGenerate = () => {
+    // Use a sample pattern that's good for demonstration
+    const demoRequest = {
+      model_name: 'gpt2-medium',
+      prompt: 'Question: What is the capital of France? Answer: Paris. Question: What is the capital of Italy? Answer: Rome. Question: What is the capital of Germany? Answer:',
+      max_length: 50, // Increased for longer generation to cover all tabs
+      temperature: 0.3
+    };
+    
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      setAnalysisHistory([]); // Clear previous history
+      setSelectedStep(null);
+      setActiveTab('induction-timeline'); // Auto-select induction timeline tab
+      socket.send(JSON.stringify(demoRequest));
+    }
+  };
+
   return (
     <main className="bg-gray-900 text-white min-h-screen font-sans">
       <div className="container-fluid mx-auto p-4">
-        <Header status={status} onRestartTour={handleRestartTour} />
+        <Header 
+          status={status} 
+          onRestartTour={handleRestartTour} 
+          onStartGuidedTour={handleStartGuidedTour}
+        />
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-3" id="controls-panel">
             <GenerationControls
@@ -144,6 +178,15 @@ export default function Home() {
         onPrevious={handleOnboardingPrevious}
         onClose={handleOnboardingClose}
         onFinish={handleOnboardingFinish}
+      />
+
+      <AutoGuidedTour
+        isVisible={showGuidedTour}
+        onClose={handleCloseGuidedTour}
+        onGenerate={handleGuidedTourGenerate}
+        onTabChange={setActiveTab}
+        currentTab={activeTab}
+        hasGeneratedData={analysisHistory.length > 0}
       />
     </main>
   );

@@ -20,37 +20,58 @@ interface OnboardingTourProps {
 
 const TOUR_STEPS: OnboardingStep[] = [
   {
-    id: 'output',
-    title: '📄 Real-Time Output',
-    description: "Watch here as the model generates text. The colors show what's happening under the hood: copying, unique generation, or pattern completion.",
-    target: 'output-panel',
-    position: 'left'
+    id: 'welcome',
+    title: '🎉 Welcome to ICL Visualization!',
+    description: "This tool reveals how AI models learn patterns in real-time. You'll see the 'invisible' learning process that happens during text generation. Let's start with a guided example!",
+    target: 'controls-panel',
+    position: 'right'
   },
   {
-    id: 'icl-highlight',
-    title: '✨ In-Context Learning in Action',
-    description: "The highlighted text shows the model using in-context learning to copy and complete patterns it found in the prompt.",
-    target: 'icl-text-container',
-    position: 'left'
+    id: 'sample-prompt',
+    title: '📝 Step 1: Try This Sample Pattern',
+    description: "I've loaded a Q&A pattern for you. Notice how it has: Question → Answer → Question → Answer. This repetition is perfect for demonstrating In-Context Learning. Click 'Generate' to see the magic!",
+    target: 'controls-panel',
+    position: 'right'
   },
   {
-    id: 'timeline',
-    title: '📊 Induction Timeline',
-    description: "This timeline tracks how well the model understands the patterns. See the 'Induction Score' peak when it successfully completes a pattern.",
+    id: 'watch-timeline',
+    title: '📈 Step 2: Watch the Timeline!',
+    description: "This is THE most important tab! The blue line shows 'Induction Score' - when it spikes, the model is having an 'aha!' moment and recognizing the Q&A pattern. High scores (20+) mean strong learning!",
     target: 'visualization-panel',
     position: 'left'
   },
   {
-    id: 'top-predictions',
-    title: '🔮 Top Predictions',
-    description: "Here are the model's top choices for the next token. See how confident it was in its prediction.",
-    target: 'top-predictions-container',
+    id: 'colored-text',
+    title: '🎨 Step 3: Color-Coded Learning',
+    description: "Purple tokens = Model predicting using patterns, Blue = Copying from earlier text, Green = Important context. Hover over any colored token for detailed insights! This shows WHERE learning happens.",
+    target: 'icl-text-container',
     position: 'left'
   },
   {
-    id: 'icl-metrics',
-    title: '📈 ICL Metrics',
-    description: "Finally, these are detailed metrics on the model's performance, like how much it's copying versus creating new text. The tour is now complete!",
+    id: 'induction-heads',
+    title: '🧠 Step 4: Which Brain Parts Are Active?',
+    description: "Click the 'Induction Heads' tab to see which parts of the AI's 'brain' are doing the pattern recognition. Each bar is a different attention head - more bars = more robust learning!",
+    target: 'visualization-panel',
+    position: 'left'
+  },
+  {
+    id: 'heatmap-exploration',
+    title: '🔥 Step 5: See the Connections',
+    description: "Try the 'Attention Heatmap' tab. Bright yellow spots show strong connections between tokens. Look for patterns connecting questions to answers - that's induction in action!",
+    target: 'visualization-panel',
+    position: 'left'
+  },
+  {
+    id: 'interpretation',
+    title: '🎯 Step 6: What Makes Good Results?',
+    description: "Strong ICL: Induction scores 20+, multiple timeline spikes, lots of colored tokens, structured heatmap patterns. Weak ICL: Flat timeline, few colors, random patterns. Now try your own prompts!",
+    target: 'output-panel',
+    position: 'left'
+  },
+  {
+    id: 'help-system',
+    title: '📚 Need More Help?',
+    description: "Click the '?' button in the top-right for detailed explanations of every feature. The help system has guides for each tab, troubleshooting, and example prompts. You're now ready to explore!",
     target: 'controls-panel',
     position: 'right'
   }
