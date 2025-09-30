@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import ModernVisualizationDashboard from '../components/ModernVisualizationDashboard';
 
 // This is an example Next.js page showing how to use the new modern dashboard
 const ModernDashboardPage: React.FC = () => {
@@ -70,11 +69,10 @@ const ModernDashboardPage: React.FC = () => {
       </div>
 
       {/* Modern Dashboard */}
-      <ModernVisualizationDashboard
+      
         analysisData={analysisData}
         fullHistory={fullHistory}
         onStepSelect={handleStepSelect}
-      />
     </div>
   );
 };
