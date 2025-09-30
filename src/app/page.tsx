@@ -147,6 +147,7 @@ export default function Home() {
           status={status} 
           onRestartTour={handleRestartTour} 
           onStartGuidedTour={handleStartGuidedTour}
+          currentTab={activeTab}
         />
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-3" id="controls-panel">

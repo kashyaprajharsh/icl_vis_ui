@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaQuestionCircle, FaTimes, FaChevronRight, FaExternalLinkAlt, FaBook, FaGraduationCap } from 'react-icons/fa';
+import { FaQuestionCircle, FaTimes, FaChevronRight, FaExternalLinkAlt, FaBook, FaGraduationCap, FaRobot } from 'react-icons/fa';
 
 interface HelpTopic {
   id: string;
@@ -20,23 +20,23 @@ interface Reference {
 const HELP_TOPICS: HelpTopic[] = [
   {
     id: 'overview',
-    title: 'In-Context Learning Visualization Dashboard',
-    content: 'This dashboard provides real-time visualization of In-Context Learning (ICL) mechanisms in GPT-2 models during text generation, focusing on induction heads and pattern recognition behavior. Built on groundbreaking research from Anthropic and leading AI institutions.',
+    title: 'In-Context Learning Visualization Tool',
+    content: 'This tool helps you understand how large language models perform in-context learning - the ability to recognize and apply patterns from context without updating model weights. Watch GPT-2 medium analyze patterns in real-time as it generates text.',
     subtopics: [
       {
-        id: 'overview-purpose',
-        title: 'Purpose & Research Foundation',
-        content: 'This tool reveals how transformer models learn patterns during inference without any training updates. It implements cutting-edge research from Anthropic\'s "Induction Heads" paper, Stanford\'s ICL analysis, and recent mathematical frameworks to make the "invisible" learning process visible and measurable.'
+        id: 'overview-icl',
+        title: 'What is In-Context Learning?',
+        content: 'In-context learning is when a language model learns from examples in its input without changing its weights. Examples: Q&A format ("Q: 2+2? A: 4. Q: 3+3? A: 6. Q: 4+4? A:"), JSON completion ({"name": "John", "age": 25}, {"name": "Sarah", "age": 30}, {"name": "Mike", "age":), or code patterns (def add(a,b): return a+b; def sub(a,b): return a-b; def mul(a,b):). This tool shows HOW this learning happens through attention mechanisms.'
       },
       {
-        id: 'overview-features',
-        title: 'Key Features',
-        content: 'Real-time induction head analysis, copying mechanism detection, attention pattern visualization, token importance analysis, ICL strength measurement with color-coded text highlighting, and automated guided tour system.'
+        id: 'overview-mechanism',
+        title: 'The Induction Head Mechanism',
+        content: 'Research shows that in-context learning primarily works through "induction heads" - attention mechanisms that detect patterns like [A][B]...[A] and predict [B]. When the model sees "cat" followed by "sat", then sees "cat" again, induction heads attend back to "sat" to predict it as the next word.'
       },
       {
-        id: 'overview-theory',
-        title: 'Theoretical Foundation',
-        content: 'Based on the discovery that induction heads constitute the primary mechanism for in-context learning in transformer models. Research shows these circuits implement "fuzzy" pattern completion, completing [A*][B*] ... [A] → [B] where A* ≈ A and B* ≈ B are similar in embedding space.'
+        id: 'overview-learning',
+        title: 'What You Will Learn',
+        content: 'Understand how transformers implement few-shot learning, see which attention heads specialize in pattern recognition, observe how attention flows between tokens, and identify what makes some prompts more effective for in-context learning than others.'
       }
     ],
     references: [
@@ -45,7 +45,7 @@ const HELP_TOPICS: HelpTopic[] = [
         authors: 'Olsson, C., Elhage, N., Nanda, N., et al.',
         url: 'https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html',
         type: 'paper',
-        description: 'Foundational research establishing induction heads as the primary mechanism for ICL'
+        description: 'Foundational Anthropic research establishing induction heads as the primary mechanism for ICL'
       },
       {
         title: 'Understanding In-Context Learning',
@@ -53,135 +53,132 @@ const HELP_TOPICS: HelpTopic[] = [
         url: 'https://ai.stanford.edu/blog/understanding-incontext/',
         type: 'blog',
         description: 'Accessible explanation of ICL mechanisms and their implications'
+      },
+      {
+        title: 'Mathematical Analysis of In-Context Learning',
+        authors: 'Wang, Y., et al.',
+        url: 'https://arxiv.org/abs/2410.11474',
+        type: 'paper',
+        description: 'Source of the induction score formula IH₂(X_L) implemented in this tool'
       }
     ]
   },
   {
-    id: 'key-concepts',
-    title: 'Key Concepts & Theory',
-    content: 'Understanding these fundamental concepts from transformer circuits research will help you interpret the visualizations. These concepts are backed by rigorous mathematical analysis and empirical evidence.',
+    id: 'icl-concepts',
+    title: 'Core In-Context Learning Concepts',
+    content: 'Understanding these fundamental concepts is essential for interpreting what you see in the visualizations. These are the building blocks of how transformers perform few-shot learning.',
     subtopics: [
       {
         id: 'concept-induction-heads',
-        title: 'Induction Heads',
-        content: 'Induction heads are circuits that look back over the sequence for previous instances of the current token (A), find the token that came after it (B), and predict that the same completion will occur again ([A][B] ... [A] → [B]). They implement pattern copying behavior and are the primary source of in-context learning. Mechanistically implemented by two attention heads: a "previous token head" and an "induction head".'
+        title: 'Induction Heads: The Pattern Recognition Mechanism',
+        content: 'Induction heads are specific attention heads that implement pattern copying. Examples: ["function"]["add"] ... ["function"] → predict "add"; ["{"]["name"] ... ["{"] → predict "name"; ["Q:"]["What"] ... ["Q:"] → predict "What". They detect when the current token matches a previous token that was followed by something specific. Research has shown these are the primary mechanism enabling in-context learning in transformers.'
       },
       {
-        id: 'concept-icl',
-        title: 'In-Context Learning',
-        content: 'In-context learning is the model\'s ability to adapt its predictions based on patterns in the input context without parameter updates. Research provides six lines of evidence that induction heads constitute the mechanism for the majority of ICL in transformer models, including co-occurrence, co-perturbation, and direct ablation studies.'
+        id: 'concept-copying-vs-induction',
+        title: 'Copying vs. Pattern Matching',
+        content: 'Copying behavior: exact repetition ("Paris is the capital of France. London is the capital of England. Paris is the capital of France."). Pattern matching: structural generalization ("English: hello, French: bonjour. English: goodbye, French: au revoir. English: thank you, French: [merci]"). Advanced induction: JSON completion ({"users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}, {"id": 3, "name": ["Charlie"]}]). Induction heads enable both - copying when patterns are exact, generalization when patterns are structural.'
       },
       {
-        id: 'concept-fuzzy-matching',
-        title: 'Fuzzy Pattern Completion',
-        content: 'Induction heads perform "fuzzy" or "nearest neighbor" pattern completion, completing [A*][B*] ... [A] → [B], where A* ≈ A and B* ≈ B are similar in embedding space. This allows for abstract pattern recognition beyond exact matches, enabling generalization to translation, code completion, and complex reasoning tasks.'
+        id: 'concept-attention-patterns',
+        title: 'Attention Patterns in ICL',
+        content: 'Attention determines which previous tokens influence the current prediction. ICL examples: Code completion (def calculate(x): return x*2; def process(y): return y*2; def transform(z): → attends to "return z*"), API patterns (GET /users/1 → {id: 1}; GET /users/2 → {id: 2}; GET /users/3 → attends to "{id: 3}"), Translation (en: cat, fr: chat; en: dog, fr: chien; en: bird, fr: → attends to "oiseau"). This attention flow enables pattern transfer between similar contexts.'
       },
       {
-        id: 'concept-phase-change',
-        title: 'Phase Change Phenomenon',
-        content: 'Models undergo a dramatic "phase change" early in training where ICL abilities emerge suddenly. During this phase, induction heads form and ICL performance improves dramatically. This phase change is visible as a bump in the training loss and occurs consistently across model sizes.'
+        id: 'concept-sequence-analysis',
+        title: 'Token-by-Token Analysis',
+        content: 'ICL happens incrementally as the model processes each token. Early tokens establish context, middle tokens form patterns, later tokens benefit from learned patterns. The tool shows this progression: watch how induction scores change as more context becomes available and patterns become clearer.'
       },
       {
-        id: 'concept-mathematical-framework',
-        title: 'Mathematical Framework',
-        content: 'ICL strength is measured using attention pattern analysis: Induction_Score = Σ A[i,j] × Pattern_Match[i,j]. Token importance combines incoming attention, outgoing attention, and attention entropy. Pattern evolution tracks induction, copying, and previous-token strengths over time.'
-      }
+        id: 'concept-mathematical-foundation',
+        title: 'Mathematical Foundation',
+        content: 'The tool implements the induction score formula: IH₂(X_L) = Σ attention_weights where X_L is the current token and we sum attention from current position to all positions that complete detected [A][B]...[A] patterns. Higher scores indicate stronger reliance on pattern-based prediction rather than random guessing.'
+      },
     ],
     references: [
       {
-        title: 'Mathematical Framework for ICL Analysis',
-        authors: 'arXiv:2410.11474',
-        url: 'https://arxiv.org/pdf/2410.11474',
+        title: 'In-context Learning and Induction Heads',
+        authors: 'Olsson, C., Elhage, N., Nanda, N., et al.',
+        url: 'https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html',
         type: 'paper',
-        description: 'Advanced mathematical formulations for measuring ICL capabilities'
+        description: 'Comprehensive analysis of induction head mechanisms and their role in ICL'
       },
       {
-        title: 'ICL Analysis Methodology',
-        authors: 'arXiv:2407.07011', 
-        url: 'https://arxiv.org/pdf/2407.07011',
+        title: 'Mathematical Analysis of In-Context Learning',
+        authors: 'Wang, Y., et al.',
+        url: 'https://arxiv.org/abs/2410.11474',
         type: 'paper',
-        description: 'Comprehensive analysis techniques for understanding ICL behavior'
-      }
-    ]
-  },
-  {
-    id: 'circuit-mechanics',
-    title: 'Circuit Mechanics',
-    content: 'Understanding how induction heads work mechanically in the model.',
-    subtopics: [
-      {
-        id: 'mechanics-implementation',
-        title: 'Implementation',
-        content: 'Induction heads are implemented by a circuit of two attention heads: a "previous token head" which copies information from the previous token into the next token, and an "induction head" which uses that information to find tokens preceded by the present token.'
+        description: 'Mathematical framework for induction score calculation used in this tool'
       },
       {
-        id: 'mechanics-attention',
-        title: 'Attention Patterns',
-        content: 'The visualization shows attention patterns that reveal how induction heads operate: looking back for similar contexts and using them to predict the next token.'
+        title: 'Transformer Circuits Framework',
+        authors: 'Elhage, N., et al.',
+        url: 'https://transformer-circuits.pub/2021/framework/index.html',
+        type: 'paper',
+        description: 'Mathematical framework for understanding transformer attention mechanisms'
       }
     ]
   },
   {
     id: 'measurements',
-    title: 'Understanding Measurements',
-    content: 'The dashboard provides various real-time measurements to analyze ICL behavior during text generation.',
+    title: 'Understanding the Measurements',
+    content: 'The tool provides quantitative metrics to measure in-context learning performance. These metrics help you understand when and how strongly ICL is occurring.',
     subtopics: [
       {
-        id: 'measure-induction',
-        title: 'Induction Score',
-        content: 'Measures pattern completion strength using the Wang et al. formula. High scores (20+) indicate strong ICL. This is the total attention weight from current tokens to positions that followed similar previous patterns.'
+        id: 'measure-induction-score',
+        title: 'Induction Score: Measuring Pattern-Based Prediction',
+        content: 'This is the primary ICL metric. It quantifies how much the model relies on induction patterns versus random guessing. Score calculation: sum of attention weights from current position to all tokens that complete [A][B]...[A] patterns. Values 0-5: weak ICL, 5-20: moderate ICL, 20+: strong ICL with clear pattern recognition.'
       },
       {
-        id: 'measure-copying',
-        title: 'Copying Score',
-        content: 'Measures direct token copying behavior - how much the model attends to previous identical tokens. Complements induction by showing when the model reuses exact content rather than learning abstract patterns.'
+        id: 'measure-induction-heads',
+        title: 'Active Induction Heads: Specialization Analysis',
+        content: 'Counts how many attention heads are actively performing induction at each step. More active heads indicates more robust and distributed pattern recognition. Helps identify whether ICL relies on few specialized heads or many generalized ones. Critical for understanding model reliability and failure modes.'
       },
       {
-        id: 'measure-attention-stats',
-        title: 'Attention Statistics',
-        content: 'Entropy (focus level), Sparsity (concentration), and Max Attention (strongest connection). These reveal how the model allocates attention and whether it\'s learning efficiently.'
+        id: 'measure-copying-score',
+        title: 'Copying Score: Direct Repetition vs. Generalization',
+        content: 'Measures verbatim copying behavior - when the model exactly repeats previous sequences. Helps distinguish between two ICL modes: mechanical copying ("the cat sat on the mat. the cat sat on the mat") versus intelligent generalization (learning Q&A format to answer new questions). Balance between copying and induction reveals learning sophistication.'
       },
       {
-        id: 'measure-token-importance',
-        title: 'Token Importance',
-        content: 'Each token shows Incoming Attention (how important it is to others), Outgoing Attention (how much it looks around), and Attention Entropy (how focused it is). Visible in token hover tooltips.'
-      }
+        id: 'measure-attention-analysis',
+        title: 'Attention Flow Analysis: Information Routing',
+        content: 'Analyzes how attention is distributed across the sequence. Entropy measures attention focus (low entropy = focused, high entropy = scattered). Sparsity indicates selective attention. These metrics reveal whether ICL involves targeted information retrieval or diffuse context integration - crucial for understanding ICL efficiency.'
+      },
     ]
   },
   {
     id: 'visualization-tabs',
-    title: 'Visualization Tabs Explained',
-    content: 'The dashboard has 6 different tabs, each showing a unique perspective on how the model processes and learns from context.',
+    title: 'Analysis Views: Six Perspectives on ICL',
+    content: 'Each visualization tab provides a different analytical lens for understanding in-context learning. Use these views together to build a complete picture of how the model processes patterns.',
     subtopics: [
       {
         id: 'tab-induction-timeline',
-        title: '📈 Induction Timeline',
-        content: 'Shows ICL strength over time as the model generates text. Blue line = induction score, Pink line = number of active induction heads. Spikes indicate "aha!" moments where the model recognizes patterns. This is usually the most important tab to watch!'
+        title: '📈 Induction Timeline: Tracking Learning Dynamics',
+        content: 'Shows ICL strength evolution during generation. Blue line = induction score (pattern-based prediction strength), pink line = number of active induction heads. Spikes indicate moments when the model discovers or applies patterns. Use this to identify when ICL occurs and measure its intensity. Essential for understanding ICL temporal dynamics.'
       },
       {
         id: 'tab-attention-heatmap',
-        title: '🔥 Attention Heatmap',
-        content: 'Color-coded matrix showing which tokens attend to which. Bright yellow/white = strong attention, Dark blue = weak attention. Look for off-diagonal bright spots connecting similar words - that\'s induction! You can select different layers to explore.'
+        title: '🔥 Attention Heatmap: Visualizing Information Flow',
+        content: 'Matrix visualization of token-to-token attention weights. Bright cells show strong attention connections. Look for patterns: diagonal attention (local context), off-diagonal patterns (long-range dependencies), block structures (repeated patterns). Critical for understanding which tokens influence current predictions and how induction heads route information.'
       },
       {
         id: 'tab-attention-graph',
-        title: '🕸️ Attention Graph',
-        content: 'Network visualization showing attention as arrows between tokens. Thicker arrows = stronger attention. Node colors progress from blue (early tokens) to purple (recent tokens). Great for seeing the overall attention flow pattern.'
+        title: '🕸️ Attention Graph: Network Analysis of Context',
+        content: 'Network representation where nodes are tokens and edges are attention weights. Reveals attention topology: which tokens are attention "hubs" receiving many connections, which create "bridges" between distant concepts. Helps identify key tokens that enable ICL and understand attention flow patterns critical for pattern transfer.'
       },
       {
         id: 'tab-strategy-timeline',
-        title: '📊 Strategy Timeline',
-        content: 'Shows how the model balances different learning strategies over time. Purple = Induction (pattern learning), Blue = Copying (exact reuse), Green = Previous Token attention. Watch how strategies shift during generation!'
+        title: '📊 Strategy Timeline: ICL Mechanism Analysis',
+        content: 'Compares three ICL strategies over time: induction (pattern-based), copying (exact repetition), previous-token attention (local context). Shows how the model balances different approaches. High induction indicates sophisticated pattern recognition; high copying suggests mechanical repetition. Use to understand ICL sophistication level.'
       },
       {
         id: 'tab-token-importance',
-        title: '⭐ Token Importance',
-        content: 'Bar charts showing each token\'s role: Incoming Attention (how important others find this token), Outgoing Attention (how much this token looks around), Attention Entropy (how focused it is). Helps identify key tokens in the sequence.'
+        title: '⭐ Token Importance: Context Contribution Analysis',
+        content: 'Quantifies each token\'s role in ICL: incoming attention (how much others attend to this token), outgoing attention (how much this token attends elsewhere), attention entropy (selectivity). Identifies which tokens provide essential context, which gather information, and which serve as pattern anchors for induction heads.'
       },
       {
         id: 'tab-induction-heads',
-        title: '🧠 Induction Heads',
-        content: 'Lists all attention heads ranked by induction strength. Each bar shows a specific layer.head (like L12H8) and its induction score. Multiple strong heads = robust pattern recognition. This shows which parts of the model are doing the learning!'
+        title: '🧠 Induction Heads: Specialization and Distribution',
+        content: 'Lists attention heads ranked by induction activity. Shows which layers and heads specialize in pattern recognition. Multiple active heads indicate robust, distributed ICL; few active heads suggest brittle, specialized ICL. Essential for understanding model architecture\'s role in ICL and identifying potential failure points.'
       }
     ]
   },
@@ -214,64 +211,50 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     id: 'getting-started',
-    title: 'Getting Started Guide',
-    content: 'Learn how to use the dashboard effectively to analyze in-context learning behavior. Start with the ICL Guided Tour for an automated introduction.',
+    title: 'ICL Research Workflow',
+    content: 'How to systematically analyze in-context learning using this tool. Follow this workflow to conduct meaningful ICL experiments and understand model behavior.',
     subtopics: [
       {
-        id: 'start-basic-usage',
-        title: 'Basic Usage',
-        content: '1) Try the ICL Guided Tour first (purple button in header), 2) Enter a prompt with patterns (like Q&A examples), 3) Click Generate, 4) Watch the timeline for learning spikes, 5) Examine color-coded tokens, 6) Check the induction score - higher means better pattern learning.'
+        id: 'start-experimental-design',
+        title: 'Step 1: Design Your ICL Experiment',
+        content: 'Choose prompts with clear patterns: \n\n**Programming patterns**: "function add(a,b) { return a+b; } function sub(a,b) { return a-b; } function mul(a,b) {" \n\n**Data patterns**: "{\"name\": \"Alice\", \"age\": 25}, {\"name\": \"Bob\", \"age\": 30}, {\"name\": \"Carol\", \"age\":" \n\n**Language patterns**: "English: hello → Spanish: hola; English: goodbye → Spanish: adiós; English: thank you → Spanish:" \n\n**Math patterns**: "Input: 2+3, Output: 5; Input: 7+1, Output: 8; Input: 4+6, Output:" \n\nThe model needs 2+ pattern instances to demonstrate induction. Document your hypothesis about expected ICL behavior.'
       },
       {
-        id: 'start-tab-workflow',
-        title: 'Recommended Tab Workflow',
-        content: 'Start with "Induction Timeline" (shows overall learning), then "Attention Heatmap" (see the patterns), then "Induction Heads" (which parts of model are active). Advanced: "Strategy Timeline" (learning strategies), "Attention Graph" (network view), "Token Importance" (detailed analysis).'
+        id: 'start-analysis-workflow',
+        title: 'Step 2: Systematic Analysis Sequence',
+        content: 'Start with Timeline tab (overall ICL strength trends) → Induction Heads tab (which mechanisms are active) → Heatmap tab (attention patterns) → Strategy Timeline (mechanism balance). Use this sequence to build understanding from macro (overall ICL) to micro (specific mechanisms).'
       },
       {
-        id: 'start-good-prompts',
-        title: 'Good Test Prompts',
-        content: 'Question-Answer pairs (Q: What is 2+2? A: 4. Q: What is 3+3? A: 6. Q: What is 4+4? A:), translation examples, code completion patterns, or any text with repeating structures. The model needs to see a pattern at least twice to demonstrate induction behavior.'
+        id: 'start-pattern-identification',
+        title: 'Step 3: Interpreting ICL Patterns',
+        content: 'Strong ICL indicators: induction scores >20, multiple active heads (>5), clear attention patterns in heatmap connecting similar contexts, high induction vs copying ratio. \n\n**Score ranges by pattern type**: Simple repetition (5-15), Q&A pairs (15-30), JSON completion (10-25), Code patterns (15-35), Translation (10-20), Random text (0-5). \n\n**Weak ICL signs**: Flat timeline, few active heads (<3), random attention patterns, high copying scores (>80% of total), scattered attention without clear structure. Use these benchmarks to evaluate ICL success and compare different prompt strategies.'
       },
       {
-        id: 'start-troubleshooting',
-        title: 'Common Issues',
-        content: 'Low scores? Try prompts with clearer patterns. No color highlighting? The model may not be recognizing patterns - try more explicit examples. WebSocket disconnected? Check that the backend server is running. Tour not working? Refresh and try again.'
-      },
-      {
-        id: 'start-quick-reference',
-        title: 'Quick Tab Reference',
-        content: '📈 Timeline = Overall ICL strength | 🔥 Heatmap = Which tokens connect | 🕸️ Graph = Attention flow network | 📊 Strategy = Learning approaches | ⭐ Importance = Token roles | 🧠 Heads = Active model parts'
+        id: 'start-comparative-analysis',
+        title: 'Step 4: Comparative Analysis',
+        content: 'Test multiple prompt formats: vary example count (2 vs 4 vs 6 examples), change pattern complexity (simple repetition vs abstract rules), modify context structure (structured vs unstructured). Compare induction scores and head activation patterns to understand what enables effective ICL.'
       }
     ]
   },
   {
     id: 'research-applications',
-    title: '🔬 Research Applications',
-    content: 'This tool serves multiple research purposes, from educational demonstrations to cutting-edge mechanistic interpretability research.',
+    title: 'Research Applications and Use Cases',
+    content: 'This tool enables systematic study of in-context learning mechanisms. Use it to investigate ICL phenomena, validate theoretical predictions, and develop better few-shot learning strategies.',
     subtopics: [
       {
-        id: 'research-educational',
-        title: 'Educational Applications',
-        content: 'Teaching ICL concepts through visual demonstration, exploring mechanistic interpretability hands-on, understanding when and why models succeed/fail, and testing which patterns are most learnable by different architectures.'
+        id: 'research-mechanistic',
+        title: 'Mechanistic Understanding of ICL',
+        content: 'Investigate how induction heads implement pattern recognition: Which layers specialize in pattern detection? How does attention flow enable pattern transfer? What makes some patterns easier to learn than others? Use head activation patterns and attention flows to understand the computational mechanisms underlying few-shot learning.'
       },
       {
-        id: 'research-scientific',
-        title: 'Research Applications',
-        content: 'Hypothesis testing for ICL theories, model comparison across architectures, studying training dynamics and emergence of ICL abilities, safety research on failure modes and limitations, and validation of theoretical predictions.'
+        id: 'research-prompt-engineering',
+        title: 'Systematic Prompt Engineering',
+        content: 'Optimize few-shot prompts using quantitative ICL metrics: \n\n**Test different structures**: \n- Explicit labels: "Example 1: input → output; Example 2: input → output" \n- Implicit patterns: "apple → fruit; car → vehicle; dog →" \n- Mixed formats: "Q: What is the capital of France? A: Paris\\nQ: What is the capital of Germany? A: Berlin\\nQ: What is the capital of Italy? A:" \n\n**Vary complexity**: \n- Simple: "1+1=2, 2+2=4, 3+3=" \n- Structured: "{\"operation\": \"add\", \"a\": 1, \"b\": 1, \"result\": 2}, {\"operation\": \"add\", \"a\": 2, \"b\": 2, \"result\": 4}" \n- Abstract: "If sunny then beach, if rainy then home, if snowy then" \n\nUse induction scores to objectively measure prompt effectiveness and identify optimal structural features.'
       },
       {
-        id: 'research-practical',
-        title: 'Practical Applications',
-        content: 'Prompt engineering for more effective few-shot learning, model selection based on ICL capabilities, performance debugging when prompts fail, capability assessment for specific tasks, and optimization of in-context learning strategies.'
-      }
-    ],
-    references: [
-      {
-        title: 'Transformer Circuits Framework',
-        authors: 'Elhage, N., et al.',
-        url: 'https://transformer-circuits.pub/2021/framework/index.html',
-        type: 'paper',
-        description: 'Mathematical framework for decomposing transformer operations and understanding attention circuits'
+        id: 'research-failure-analysis',
+        title: 'ICL Failure Mode Analysis',
+        content: 'Study when and why ICL fails: \\n\\n**Common failure patterns**: \\n- Inconsistent structure: \"Q: 2+2? A: 4. Question: What is 3+3? Answer: 6\" (mixed formats) \\n- Conflicting examples: \"big → small; large → tiny; huge → massive\" (inconsistent relationships) \\n- Insufficient context: \"cat → animal\" (single example, no pattern) \\n- Noisy patterns: \"a→1, b→2, xyz→999, c→3\" (disrupted sequence) \\n\\n**Analysis approach**: Identify contexts where induction heads remain inactive (<3 active heads), analyze attention patterns during poor performance (scattered, unfocused), understand copying vs. generalization trade-offs (>70% copying indicates failure to generalize). Use these insights to predict ICL reliability and develop robust few-shot strategies.'
       }
     ]
   }
@@ -283,13 +266,7 @@ interface HelpSystemProps {
 }
 
 const HelpSystem: React.FC<HelpSystemProps> = ({ isOpen, onClose }) => {
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [selectedSubtopic, setSelectedSubtopic] = useState<string | null>(null);
-
   if (!isOpen) return null;
-
-  const currentTopic = HELP_TOPICS.find(topic => topic.id === selectedTopic);
-  const currentSubtopic = currentTopic?.subtopics?.find(subtopic => subtopic.id === selectedSubtopic);
 
   const getIconForReferenceType = (type: 'paper' | 'blog' | 'documentation') => {
     switch (type) {
@@ -300,141 +277,109 @@ const HelpSystem: React.FC<HelpSystemProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-gray-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex">
-        {/* Topics Sidebar */}
-        <div className="w-64 border-r border-gray-700 p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <FaBook className="text-purple-400" />
-              Documentation
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <FaTimes size={20} />
-            </button>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <div className="flex items-center gap-3">
+            <FaBook className="text-purple-400 text-2xl" />
+            <div>
+              <h2 className="text-2xl font-bold text-white">In-Context Learning Research Documentation</h2>
+              <p className="text-gray-400 text-sm">Comprehensive guide to ICL visualization and analysis</p>
+            </div>
           </div>
-          <nav>
-            {HELP_TOPICS.map(topic => (
-              <div key={topic.id} className="mb-2">
-                <button
-                  onClick={() => {
-                    setSelectedTopic(topic.id);
-                    setSelectedSubtopic(null);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-md flex items-center justify-between ${
-                    selectedTopic === topic.id
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800'
-                  }`}
-                >
-                  {topic.title}
-                  {topic.subtopics && <FaChevronRight size={12} />}
-                </button>
-                {selectedTopic === topic.id && topic.subtopics && (
-                  <div className="ml-4 mt-1 space-y-1">
-                    {topic.subtopics.map(subtopic => (
-                      <button
-                        key={subtopic.id}
-                        onClick={() => setSelectedSubtopic(subtopic.id)}
-                        className={`w-full text-left px-3 py-1.5 rounded-md ${
-                          selectedSubtopic === subtopic.id
-                            ? 'bg-blue-500/30 text-blue-300'
-                            : 'text-gray-400 hover:bg-gray-800'
-                        }`}
-                      >
-                        {subtopic.title}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800 rounded-lg"
+          >
+            <FaTimes size={24} />
+          </button>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          {currentTopic && (
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4">{currentTopic.title}</h2>
-              <p className="text-gray-300 mb-6 leading-relaxed">{currentTopic.content}</p>
-              
-              {currentSubtopic && (
-                <div className="mt-6">
-                  <h3 className="text-xl font-semibold text-white mb-3">{currentSubtopic.title}</h3>
-                  <p className="text-gray-300 leading-relaxed">{currentSubtopic.content}</p>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-8">
+          <div className="max-w-4xl mx-auto space-y-12">
+            {HELP_TOPICS.map((topic, topicIndex) => (
+              <section key={topic.id} className="space-y-6">
+                {/* Topic Header */}
+                <div className="border-l-4 border-blue-500 pl-6">
+                  <h1 className="text-3xl font-bold text-white mb-4">
+                    {topicIndex + 1}. {topic.title}
+                  </h1>
+                  <div className="prose prose-invert prose-lg max-w-none">
+                    <p className="text-gray-300 leading-relaxed text-lg">{topic.content}</p>
+                  </div>
                 </div>
-              )}
 
-              {/* References Section */}
-              {currentTopic.references && currentTopic.references.length > 0 && (
-                <div className="mt-8 border-t border-gray-700 pt-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <FaBook className="text-blue-400" />
-                    Research References & Further Reading
-                  </h3>
-                  <div className="space-y-4">
-                    {currentTopic.references.map((ref, index) => (
-                      <div key={index} className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500/50 transition-colors">
-                        <div className="flex items-start gap-3">
-                          {getIconForReferenceType(ref.type)}
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <h4 className="text-white font-medium mb-1">{ref.title}</h4>
-                                {ref.authors && (
-                                  <p className="text-gray-400 text-sm mb-2">{ref.authors}</p>
-                                )}
-                                {ref.description && (
-                                  <p className="text-gray-300 text-sm leading-relaxed">{ref.description}</p>
-                                )}
-                              </div>
-                              <a
-                                href={ref.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm px-3 py-2 rounded-md transition-colors whitespace-nowrap"
-                              >
-                                <FaExternalLinkAlt size={12} />
-                                {ref.type === 'paper' ? 'Read Paper' : ref.type === 'blog' ? 'Read Article' : 'View Docs'}
-                              </a>
-                            </div>
-                          </div>
+                {/* Subtopics */}
+                {topic.subtopics && topic.subtopics.length > 0 && (
+                  <div className="ml-6 space-y-6">
+                    {topic.subtopics.map((subtopic, subtopicIndex) => (
+                      <div key={subtopic.id} className="bg-gray-800/30 border border-gray-700 rounded-lg p-6">
+                        <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-3">
+                          <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                            {topicIndex + 1}.{subtopicIndex + 1}
+                          </span>
+                          {subtopic.title}
+                        </h3>
+                        <div className="prose prose-invert max-w-none">
+                          <p className="text-gray-300 leading-relaxed">{subtopic.content}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {!currentTopic && (
-            <div className="text-center py-12">
-              <FaQuestionCircle size={48} className="text-blue-400 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-white mb-2">Welcome to the ICL Documentation</h2>
-              <p className="text-gray-400 mb-4">Select a topic from the sidebar to learn more about the dashboard's features.</p>
-              <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-lg p-4 max-w-md mx-auto">
-                <p className="text-blue-300 text-sm">
-                  💡 <strong>New to the tool?</strong> Try the <strong>ICL Guided Tour</strong> first! 
-                  Click the purple "ICL Guide Demo" button in the header for an automated walkthrough.
-                </p>
-              </div>
-              <div className="mt-6 text-left max-w-md mx-auto">
-                <h3 className="text-white font-medium mb-3 flex items-center gap-2">
-                  <FaBook className="text-green-400" />
-                  Research-Based Tool
-                </h3>
-                <p className="text-gray-300 text-sm leading-relaxed">
-                  This visualization tool is built on cutting-edge research from Anthropic, Stanford, 
-                  and recent mathematical frameworks for understanding in-context learning mechanisms.
-                </p>
-              </div>
-            </div>
-          )}
+                )}
+
+                {/* References */}
+                {topic.references && topic.references.length > 0 && (
+                  <div className="ml-6 space-y-4">
+                    <h3 className="text-xl font-semibold text-white flex items-center gap-3">
+                      <FaGraduationCap className="text-blue-400" />
+                      Research References
+                    </h3>
+                    <div className="space-y-4">
+                      {topic.references.map((ref, index) => (
+                        <div key={index} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 hover:border-blue-500/50 transition-colors">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 p-2 bg-gray-700/50 rounded-lg">
+                              {getIconForReferenceType(ref.type)}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div>
+                                  <h4 className="text-white font-medium mb-1">{ref.title}</h4>
+                                  {ref.authors && (
+                                    <p className="text-blue-300 text-sm mb-2">{ref.authors}</p>
+                                  )}
+                                </div>
+                                <a
+                                  href={ref.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm px-3 py-2 rounded-md transition-colors whitespace-nowrap"
+                                >
+                                  <FaExternalLinkAlt size={12} />
+                                  {ref.type === 'paper' ? 'Read Paper' : ref.type === 'blog' ? 'Read Article' : 'View Docs'}
+                                </a>
+                              </div>
+                              {ref.description && (
+                                <p className="text-gray-300 text-sm leading-relaxed">{ref.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Separator between topics */}
+                {topicIndex < HELP_TOPICS.length - 1 && (
+                  <hr className="border-gray-700 my-8" />
+                )}
+              </section>
+            ))}
+          </div>
         </div>
       </div>
     </div>

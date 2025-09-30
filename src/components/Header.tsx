@@ -6,9 +6,10 @@ interface HeaderProps {
   status: string;
   onRestartTour?: () => void;
   onStartGuidedTour?: () => void;
+  currentTab?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ status, onRestartTour, onStartGuidedTour }) => {
+const Header: React.FC<HeaderProps> = ({ status, onRestartTour, onStartGuidedTour, currentTab }) => {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const isConnected = status === 'Connected';
   
@@ -33,11 +34,11 @@ const Header: React.FC<HeaderProps> = ({ status, onRestartTour, onStartGuidedTou
             <FaBook size={14} />
             Docs
           </button>
-          {onStartGuidedTour && (
+          {onStartGuidedTour && currentTab === 'induction-timeline' && (
             <button
               onClick={onStartGuidedTour}
-              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-md hover:from-purple-500 hover:to-blue-500 transition-all duration-200 text-sm font-medium shadow-lg"
-              title="Start automated guided tour"
+              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-md hover:from-purple-500 hover:to-blue-500 transition-all duration-200 text-sm font-medium shadow-lg animate-pulse-subtle"
+              title="Start automated guided tour - Available on Induction Timeline tab"
             >
               <FaRobot size={14} />
               ICL Guide Demo
