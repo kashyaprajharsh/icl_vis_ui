@@ -59,8 +59,8 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
 
   useEffect(() => {
     // Connect to the deployed Azure Container Apps backend
-    //fetch('https://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/sample-patterns')
-    fetch('http://localhost:8000/sample-patterns')
+    fetch('https://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/sample-patterns')
+    //fetch('http://localhost:8000/sample-patterns')
       .then(res => res.json())
       .then(data => {
         setSamplePatterns(data.patterns);
