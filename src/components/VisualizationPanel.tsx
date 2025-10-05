@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Plot from 'react-plotly.js';
 import { Network } from 'vis-network';
 import InductionHeadVisualizer from './InductionHeadVisualizer';
+import InductionCircuitVisualizer from './InductionCircuitVisualizer';
 import 'vis-network/styles/vis-network.css'; // Required for default hover tooltips
 
 interface VisualizationPanelProps {
@@ -17,6 +18,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
   const [selectedColorscale, setSelectedColorscale] = useState('Blues');
   // User-adjustable minimum edge strength (fraction of max weight)
   const [edgeThreshold, setEdgeThreshold] = useState(0.2);
+  const [showCircuitDetails, setShowCircuitDetails] = useState(false);
   const graphRef = useRef(null);
   const networkRef = useRef<Network | null>(null);
 
@@ -153,16 +155,19 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
             enabled: true,
             solver: 'forceAtlas2Based',
             forceAtlas2Based: {
-              gravitationalConstant: -80,  // Stronger repulsion
-              centralGravity: 0.005,       // Less central pull
-              springLength: 150,           // Longer springs
-              springConstant: 0.05,        // Weaker springs
-              damping: 0.6,                // More damping
-              avoidOverlap: 1.0            // Better node separation
+              gravitationalConstant: -120,  // Even stronger repulsion to spread nodes
+              centralGravity: 0.002,        // Minimal central pull to reduce hub effect
+              springLength: 200,            // Longer springs for more space
+              springConstant: 0.03,         // More flexible springs
+              damping: 0.7,                 // Higher damping for smoother settling
+              avoidOverlap: 1.0             // Prevent node overlap
             },
-            maxVelocity: 30,
+            maxVelocity: 40,                // Allow faster movement to spread out
             minVelocity: 0.1,
-            stabilization: { iterations: 200 }
+            stabilization: { 
+              iterations: 300,              // More iterations for better layout
+              fit: true                     // Fit to viewport after stabilization
+            }
           },
           interaction: {
             hover: true,
@@ -249,7 +254,9 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                   <div className="text-sm text-slate-300 space-y-2">
                     <p>
                       This heatmap shows <strong>which words the AI is paying attention to</strong> when generating each new word.
-                      Lighter blues indicate stronger attention, and darker blues indicate weaker attention (see the colorbar).
+                      {selectedColorscale === 'Blues' || selectedColorscale === 'Viridis' || selectedColorscale === 'Plasma' 
+                        ? ' Lighter colors indicate stronger attention, darker colors indicate weaker attention (see the colorbar).'
+                        : ' Brighter colors indicate stronger attention, darker colors indicate weaker attention (see the colorbar).'}
                     </p>
                     <div className="grid md:grid-cols-2 gap-3 mt-3">
                       <div className="flex items-center gap-2">
@@ -262,7 +269,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-lg">🌈</span>
-                        <span><strong>Lighter blues:</strong> Strong attention connections</span>
+                        <span><strong>{selectedColorscale === 'Blues' ? 'Lighter blues' : selectedColorscale === 'Viridis' ? 'Yellow/bright' : selectedColorscale === 'Plasma' ? 'Yellow/pink' : 'Bright colors'}:</strong> Strong attention connections</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-lg">🔲</span>
@@ -375,6 +382,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                     <p>
                       This network shows <strong>how information flows between words</strong> in the AI's "mind". 
                       Each word is a node, and arrows show which words are paying attention to which others.
+                      Nodes spread out automatically to reveal hidden connections beyond central hubs.
                     </p>
                     <div className="grid md:grid-cols-2 gap-3 mt-3">
                       <div className="flex items-center gap-2">
@@ -457,6 +465,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
           return <div className="text-center p-12 text-slate-500">Generate data to see the timeline.</div>;
         }
         const timelineData = fullHistory[fullHistory.length - 1].pattern_evolution;
+        const circuitData = analysisData?.icl_metrics?.induction_circuit;
         const steps = timelineData.map((d: any) => d.step);
         const scores = timelineData.map((d: any) => d.induction_score);
         const heads = timelineData.map((d: any) => d.num_induction_heads);
@@ -597,6 +606,199 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
 
         return (
             <div className="space-y-4">
+              {/* Circuit Status Card - Expandable */}
+              {circuitData && (
+                <div className={`border-2 rounded-lg ${
+                  circuitData.circuit_strength === 'STRONG' ? 'bg-green-500/10 border-green-500' :
+                  circuitData.circuit_strength === 'PARTIAL' ? 'bg-yellow-500/10 border-yellow-500' :
+                  circuitData.circuit_strength === 'WEAK' ? 'bg-orange-500/10 border-orange-500' :
+                  'bg-slate-700/50 border-slate-600'
+                }`}>
+                  {/* Compact Header - Always Visible */}
+                  <div className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">
+                          {circuitData.circuit_strength === 'STRONG' ? '✅' : 
+                           circuitData.circuit_strength === 'PARTIAL' ? '⚠️' : 
+                           circuitData.circuit_strength === 'WEAK' ? '⚡' : '❌'}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-base font-bold ${
+                              circuitData.circuit_strength === 'STRONG' ? 'text-green-400' :
+                              circuitData.circuit_strength === 'PARTIAL' ? 'text-yellow-400' :
+                              circuitData.circuit_strength === 'WEAK' ? 'text-orange-400' :
+                              'text-slate-400'
+                            }`}>
+                              Two-Head Circuit: {circuitData.circuit_strength}
+                            </span>
+                            <span className="text-xs text-slate-400 bg-slate-700/50 px-2 py-0.5 rounded">
+                              Score: {circuitData.combined_score.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-300 mt-1 flex items-center gap-3">
+                            <span>
+                              {circuitData.has_prev_head ? '✅' : '❌'} {circuitData.previous_token_heads.length} Prev-Token
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span>
+                              {circuitData.has_induction_head ? '✅' : '❌'} {analysisData?.icl_metrics?.induction_heads || 0} Induction
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowCircuitDetails(!showCircuitDetails)}
+                        className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded transition flex items-center gap-1"
+                        title="Toggle detailed circuit breakdown"
+                      >
+                        {showCircuitDetails ? 'Hide Details' : 'Show Details'} {showCircuitDetails ? '▲' : '▼'}
+                      </button>
+                    </div>
+                    {circuitData.circuit_strength === 'STRONG' && !showCircuitDetails && (
+                      <div className="mt-2 pt-2 border-t border-green-600/30 text-xs text-green-300/90">
+                        <strong>🔬 Full Circuit Active:</strong> Previous-token heads (early layers) + Induction heads (later layers) = True In-Context Learning
+                      </div>
+                    )}
+                    {circuitData.circuit_strength === 'PARTIAL' && !showCircuitDetails && (
+                      <div className="mt-2 pt-2 border-t border-yellow-600/30 text-xs text-yellow-300/90">
+                        <strong>⚠️ Incomplete Circuit:</strong> {circuitData.explanation}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Detailed Breakdown - Collapsible */}
+                  {showCircuitDetails && (
+                    <div className="border-t border-slate-600/50 p-4 space-y-4">
+                      {/* Full Explanation */}
+                      <div className="text-sm text-slate-300">
+                        {circuitData.explanation}
+                      </div>
+
+                      {/* Components Grid */}
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {/* Previous Token Heads */}
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <h4 className="font-semibold text-cyan-400 mb-2 flex items-center gap-2">
+                            <span>🔄</span> Previous-Token Heads ({circuitData.previous_token_heads.length})
+                          </h4>
+                          {circuitData.previous_token_heads.length > 0 ? (
+                            <>
+                              <p className="text-xs text-slate-400 mb-3">
+                                Creating shifted representations in layers{' '}
+                                {(() => {
+                                  const layers = circuitData.previous_token_heads.map((h: any) => h.layer);
+                                  return `${Math.min(...layers)}-${Math.max(...layers)}`;
+                                })()}
+                              </p>
+                              <div className="space-y-1 max-h-48 overflow-y-auto">
+                                {circuitData.previous_token_heads.map((head: any, idx: number) => (
+                                  <div 
+                                    key={idx} 
+                                    className="flex items-center justify-between text-xs bg-slate-700/50 rounded px-2 py-1"
+                                  >
+                                    <span className="text-slate-300">
+                                      L{head.layer}H{head.head}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-16 bg-slate-600 rounded-full h-1.5">
+                                        <div 
+                                          className="bg-cyan-400 h-1.5 rounded-full"
+                                          style={{ width: `${head.avg_prev_attention * 100}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-cyan-400 font-mono w-12 text-right">
+                                        {(head.avg_prev_attention * 100).toFixed(0)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-xs text-slate-500">No previous-token heads detected</p>
+                          )}
+                        </div>
+
+                        {/* Induction Heads Summary */}
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <h4 className="font-semibold text-purple-400 mb-2 flex items-center gap-2">
+                            <span>🧠</span> Induction Heads ({analysisData?.icl_metrics?.induction_heads || 0})
+                          </h4>
+                          {circuitData.has_induction_head ? (
+                            <>
+                              <p className="text-xs text-slate-400 mb-3">
+                                Pattern matching in layers{' '}
+                                {circuitData.explanation.match(/layers (\d+-\d+)/)?.[1] || 'multiple'}
+                              </p>
+                              <div className="bg-slate-700/50 rounded p-3">
+                                <div className="flex justify-between items-center text-xs mb-1">
+                                  <span className="text-slate-400">Induction Score</span>
+                                  <span className="text-purple-400 font-bold">
+                                    {analysisData?.icl_metrics?.induction_score.toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-slate-600 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full"
+                                    style={{ width: `${Math.min((analysisData?.icl_metrics?.induction_score || 0) * 2, 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => setActiveTab('induction')}
+                                className="mt-3 w-full text-xs bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 px-3 py-1.5 rounded transition"
+                              >
+                                View All {analysisData?.icl_metrics?.induction_heads} Heads →
+                              </button>
+                            </>
+                          ) : (
+                            <p className="text-xs text-slate-500">No induction heads detected</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Circuit Flow Diagram */}
+                      {circuitData.circuit_strength === 'STRONG' && (
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <h4 className="text-sm font-semibold text-slate-300 mb-3">🔄 Circuit Information Flow</h4>
+                          <div className="flex items-center justify-center gap-3 text-xs">
+                            <div className="text-center">
+                              <div className="bg-cyan-500/20 border-2 border-cyan-500 rounded-lg p-2 mb-1">
+                                <div className="text-cyan-400 font-bold text-xs">
+                                  Layers {(() => {
+                                    const layers = circuitData.previous_token_heads.map((h: any) => h.layer);
+                                    return layers.length > 0 ? `${Math.min(...layers)}-${Math.max(...layers)}` : '?';
+                                  })()}
+                                </div>
+                                <div className="text-slate-300 text-xs mt-1">Prev-Token</div>
+                              </div>
+                            </div>
+                            <div className="text-slate-500">→</div>
+                            <div className="text-center">
+                              <div className="bg-purple-500/20 border-2 border-purple-500 rounded-lg p-2 mb-1">
+                                <div className="text-purple-400 font-bold text-xs">
+                                  Layers {circuitData.explanation.match(/layers (\d+-\d+)/)?.[1] || '?'}
+                                </div>
+                                <div className="text-slate-300 text-xs mt-1">Induction</div>
+                              </div>
+                            </div>
+                            <div className="text-slate-500">→</div>
+                            <div className="text-center">
+                              <div className="bg-green-500/20 border-2 border-green-500 rounded-lg p-2 mb-1">
+                                <div className="text-green-400 font-bold text-xs">ICL</div>
+                                <div className="text-slate-300 text-xs mt-1">Output</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Friendly explanation card */}
               <div className="bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 rounded-lg p-4">
                 <div className="flex items-start gap-3">
@@ -945,7 +1147,7 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
   };
 
   const tabs = [
-    { id: 'induction-timeline', label: 'Induction Timeline', tooltip: '📈 Watch ICL strength over time - spikes = learning moments!' },
+    { id: 'induction-timeline', label: 'Induction Timeline', tooltip: '📈 ICL progress + circuit status - see the full learning story!' },
     { id: 'attention-heatmap', label: 'Attention Heatmap', tooltip: '🔥 See which tokens connect - bright spots = strong attention' },
     { id: 'attention-graph', label: 'Attention Graph', tooltip: '🕸️ Network view of attention flow - arrows show connections' },
     { id: 'strategy-timeline', label: 'Strategy Timeline', tooltip: '📊 How model balances induction vs copying strategies' },

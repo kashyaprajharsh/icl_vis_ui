@@ -59,8 +59,8 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
 
   useEffect(() => {
     // Connect to the deployed Azure Container Apps backend
-    fetch('https://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/sample-patterns')
-    //fetch('http://localhost:8000/sample-patterns')
+    //fetch('https://gpt2-viz-backend.icyfield-a7f63f03.eastus.azurecontainerapps.io/sample-patterns')
+    fetch('http://localhost:8000/sample-patterns')
       .then(res => res.json())
       .then(data => {
         setSamplePatterns(data.patterns);
@@ -160,6 +160,33 @@ const GenerationControls: React.FC<GenerationControlsProps> = ({ onGenerate, ana
       <div className="flex-grow space-y-4 overflow-y-auto">
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 space-y-4">
           <h3 className="text-lg font-semibold text-slate-200">ICL Metrics</h3>
+          
+          {/* Circuit Strength Badge */}
+          {analysisData?.icl_metrics?.induction_circuit && (
+            <div className={`rounded-lg p-3 border-2 ${
+              analysisData.icl_metrics.induction_circuit.circuit_strength === 'STRONG' ? 'bg-green-500/10 border-green-500' :
+              analysisData.icl_metrics.induction_circuit.circuit_strength === 'PARTIAL' ? 'bg-yellow-500/10 border-yellow-500' :
+              analysisData.icl_metrics.induction_circuit.circuit_strength === 'WEAK' ? 'bg-orange-500/10 border-orange-500' :
+              'bg-slate-700/50 border-slate-600'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-slate-300">Circuit Strength</span>
+                <span className={`text-sm font-bold ${
+                  analysisData.icl_metrics.induction_circuit.circuit_strength === 'STRONG' ? 'text-green-400' :
+                  analysisData.icl_metrics.induction_circuit.circuit_strength === 'PARTIAL' ? 'text-yellow-400' :
+                  analysisData.icl_metrics.induction_circuit.circuit_strength === 'WEAK' ? 'text-orange-400' :
+                  'text-slate-400'
+                }`}>
+                  {analysisData.icl_metrics.induction_circuit.circuit_strength}
+                </span>
+              </div>
+              <div className="text-xs text-slate-400">
+                {analysisData.icl_metrics.induction_circuit.has_prev_head ? '✅' : '❌'} Prev-Token • {' '}
+                {analysisData.icl_metrics.induction_circuit.has_induction_head ? '✅' : '❌'} Induction
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 gap-4 text-sm">
             <MetricDisplay label="Induction Score" value={analysisData?.icl_metrics.induction_score.toFixed(3)} />
             <MetricDisplay label="Induction Heads" value={analysisData?.icl_metrics.induction_heads} />

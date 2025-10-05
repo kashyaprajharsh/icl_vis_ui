@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaQuestionCircle, FaTimes, FaChevronRight, FaExternalLinkAlt, FaBook, FaGraduationCap, FaRobot } from 'react-icons/fa';
 
 interface HelpTopic {
@@ -93,6 +93,11 @@ const HELP_TOPICS: HelpTopic[] = [
         title: 'Mathematical Foundation',
         content: 'The tool implements the induction score formula: IH₂(X_L) = Σ attention_weights where X_L is the current token and we sum attention from current position to all positions that complete detected [A][B]...[A] patterns. Higher scores indicate stronger reliance on pattern-based prediction rather than random guessing.'
       },
+      {
+        id: 'concept-two-head-circuit',
+        title: 'The Two-Head Circuit: How ICL Actually Works',
+        content: 'Research has discovered that in-context learning requires TWO types of attention heads working together in sequence - like a relay race where one head passes information to another.\n\n**Stage 1: Previous-Token Heads (The "Shifters")**\nThese heads create shifted representations by attending from position i to position i-1. Example: When processing "Berlin", they attend back to "Germany". This creates a "memory pointer" that links tokens together.\n\n**Stage 2: Induction Heads (The "Matchers")**\nThese heads use the shifted representations to match patterns. When they see "Italy" (similar context to "Germany"), they use the previous-token head\'s pointer to find and copy "Rome" (similar to how "Berlin" followed "Germany").\n\n**Why Both Are Needed:**\nWithout previous-token heads, induction heads can\'t access the shifted representations needed for pattern matching. Without induction heads, there\'s no pattern recognition. Both components working together enable true in-context learning.\n\n**The Circuit Badge:**\nThe green "STRONG" badge in your timeline shows both components are active and working together. The checkmarks (✅ 9 Prev-Token • ✅ 102 Induction) confirm both stages are present. The score quantifies how strongly they\'re operating. Click "Show Details" to see individual head performance and the circuit flow diagram.'
+      },
     ],
     references: [
       {
@@ -115,6 +120,33 @@ const HELP_TOPICS: HelpTopic[] = [
         url: 'https://transformer-circuits.pub/2021/framework/index.html',
         type: 'paper',
         description: 'Mathematical framework for understanding transformer attention mechanisms'
+      }
+    ]
+  },
+  {
+    id: 'quick-start',
+    title: '🚀 Quick Start Guide',
+    content: 'New to this tool? Start here for a 2-minute introduction to analyzing in-context learning.',
+    subtopics: [
+      {
+        id: 'quick-first-steps',
+        title: 'Your First Analysis (30 seconds)',
+        content: '1. **Use a sample prompt** from the dropdown (try "Question Answering")\n2. **Click the blue "Generate" button** (left panel)\n3. **Watch the blue line spike** on the Induction Timeline - those spikes show the AI learning!\n4. **Look for the green badge** at the top - "STRONG" means ICL is working\n\nThat\'s it! You\'ve just watched AI learn a pattern in real-time.'
+      },
+      {
+        id: 'quick-interpret',
+        title: 'Reading Your Results (1 minute)',
+        content: '**Good ICL looks like:**\n✅ Green "STRONG" circuit badge\n✅ Blue line spikes above 20 on the timeline\n✅ Colored tokens in the output (purple = pattern prediction)\n✅ Multiple "Key Learning Moments" below the graph\n\n**Weak ICL looks like:**\n⚠️ Gray or Orange circuit badge\n⚠️ Flat timeline with scores under 10\n⚠️ Few or no colored tokens\n⚠️ No breakthrough moments\n\n**What to do next:** Try the "ICL Guide Demo" button (top right) for an automated tour of all features!'
+      },
+      {
+        id: 'quick-workflow',
+        title: 'Recommended Workflow',
+        content: '1. **Start with Induction Timeline** - Quick overview of ICL strength\n2. **Check the Circuit Badge** - Confirms both components working\n3. **Explore colored output** - See which tokens used patterns\n4. **Try Attention Heatmap** - Understand connections between words\n5. **Compare different prompts** - Learn what makes good ICL!\n\nPro tip: Use the "Quick Tour" button (top right) for an interactive walkthrough.'
+      },
+      {
+        id: 'quick-best-prompts',
+        title: 'What Makes a Good Prompt?',
+        content: '**Strong ICL prompts have:**\n✅ Clear, repetitive structure\n✅ 2-3+ examples of the same pattern\n✅ Consistent format throughout\n✅ Simple, learnable relationships\n\n**Examples:**\n🟢 Good: "Q: 2+2? A: 4. Q: 3+3? A: 6. Q: 4+4? A:"\n🔴 Bad: "What is 2+2? The answer is 4. 3+3 equals 6. Calculate 4+4:"\n\nConsistency is key - the AI learns better from predictable patterns!'
       }
     ]
   },
@@ -237,6 +269,33 @@ const HELP_TOPICS: HelpTopic[] = [
     ]
   },
   {
+    id: 'color-guide',
+    title: '🎨 Color Guide - Understanding Visual Indicators',
+    content: 'Colors in this tool are semantically meaningful and consistent across all visualizations. Each color represents a specific ICL concept or behavior.',
+    subtopics: [
+      {
+        id: 'color-primary',
+        title: 'Primary ICL Colors',
+        content: '🟣 **Purple = Induction/Pattern Recognition**: Model predicting using recognized patterns [A][B]...[A]→[B]. Used for: induction target tokens, strong circuit badges, pattern indicators.\n\n🔵 **Blue/Cyan = Copying/Attention**: Model copying or attending to specific tokens. Used for: copying source tokens, induction score line, attention heatmap, network edges.\n\n🟢 **Green = High Attention/Important Context**: Token receiving high attention from others. Used for: important context markers, strong circuit status, success states.\n\n🟡 **Yellow = Attention Source/Scanning**: Token actively attending to others to gather information. Used for: scanning tokens, sustained learning markers, partial circuit status.'
+      },
+      {
+        id: 'color-intensity',
+        title: 'Activity Intensity Colors',
+        content: '🔴 **Red = Breakthrough Moments**: Major pattern recognition breakthroughs. Peak learning moments on timeline where induction score spikes dramatically.\n\n🟠 **Orange = Weak/Partial Activity**: Weak or partial pattern recognition. Used for: weak circuit badges, moderate induction activity, warning states.\n\n🩷 **Pink = Induction Head Count**: Number of attention heads actively performing induction at each step (secondary metric on timeline).'
+      },
+      {
+        id: 'color-components',
+        title: 'Color Usage By Component',
+        content: '**Highlighted Text (Output Panel)**: Purple=induction target, Blue=copying source, Green=high attention, Yellow=attention source. Hover for details!\n\n**Timeline Graph**: Cyan line=induction score, Pink dots=head count, Red markers=breakthroughs, Yellow background=sustained activity.\n\n**Circuit Badges**: Green=STRONG, Yellow=PARTIAL, Orange=WEAK, Gray=NONE.\n\n**Heatmap**: Lighter/brighter colors = stronger attention (description adapts to selected color scale).\n\n**Network Graph**: Cyan edges = attention connections, node colors = importance gradient (red=high, blue=low).'
+      },
+      {
+        id: 'color-consistency',
+        title: 'Color Consistency Rules',
+        content: '✅ **Purple always means induction** across all views\n✅ **Blue/Cyan always means copying or attention** flow\n✅ **Green always means high importance** or strong status\n✅ **Yellow always means scanning** or moderate activity\n✅ **Red always means breakthrough** or very strong activity\n\n**Accessibility**: All colors maintain WCAG AA contrast ratios. Color is never the only indicator - we also use icons, text labels, and tooltips.'
+      }
+    ]
+  },
+  {
     id: 'research-applications',
     title: 'Research Applications and Use Cases',
     content: 'This tool enables systematic study of in-context learning mechanisms. Use it to investigate ICL phenomena, validate theoretical predictions, and develop better few-shot learning strategies.',
@@ -263,9 +322,38 @@ const HELP_TOPICS: HelpTopic[] = [
 interface HelpSystemProps {
   isOpen: boolean;
   onClose: () => void;
+  currentTab?: string;
 }
 
-const HelpSystem: React.FC<HelpSystemProps> = ({ isOpen, onClose }) => {
+const HelpSystem: React.FC<HelpSystemProps> = ({ isOpen, onClose, currentTab }) => {
+  // Map current tab to relevant help topic
+  const getRelevantTopicId = (tabId?: string): string | null => {
+    const tabToTopicMap: { [key: string]: string } = {
+      'induction-timeline': 'tab-induction-timeline',
+      'attention-heatmap': 'tab-attention-heatmap',
+      'attention-graph': 'tab-attention-graph',
+      'strategy-timeline': 'tab-strategy-timeline',
+      'token-importance': 'tab-token-importance',
+      'induction': 'tab-induction-heads'
+    };
+    return tabId ? tabToTopicMap[tabId] || null : null;
+  };
+  
+  const relevantTopicId = getRelevantTopicId(currentTab);
+  
+  // Auto-scroll to relevant section when help opens
+  useEffect(() => {
+    if (isOpen && relevantTopicId) {
+      // Small delay to ensure the modal is fully rendered
+      setTimeout(() => {
+        const element = document.getElementById(relevantTopicId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [isOpen, relevantTopicId]);
+  
   if (!isOpen) return null;
 
   const getIconForReferenceType = (type: 'paper' | 'blog' | 'documentation') => {
@@ -298,6 +386,19 @@ const HelpSystem: React.FC<HelpSystemProps> = ({ isOpen, onClose }) => {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8">
+          {/* Context Banner */}
+          {currentTab && relevantTopicId && (
+            <div className="max-w-4xl mx-auto mb-6 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/50 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">👁️</span>
+                <div>
+                  <p className="text-white font-semibold">Context-Aware Help</p>
+                  <p className="text-sm text-gray-300">Showing information relevant to your current tab. Scroll down to see the highlighted section.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="max-w-4xl mx-auto space-y-12">
             {HELP_TOPICS.map((topic, topicIndex) => (
               <section key={topic.id} className="space-y-6">
@@ -314,19 +415,37 @@ const HelpSystem: React.FC<HelpSystemProps> = ({ isOpen, onClose }) => {
                 {/* Subtopics */}
                 {topic.subtopics && topic.subtopics.length > 0 && (
                   <div className="ml-6 space-y-6">
-                    {topic.subtopics.map((subtopic, subtopicIndex) => (
-                      <div key={subtopic.id} className="bg-gray-800/30 border border-gray-700 rounded-lg p-6">
-                        <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-3">
-                          <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
-                            {topicIndex + 1}.{subtopicIndex + 1}
-                          </span>
-                          {subtopic.title}
-                        </h3>
-                        <div className="prose prose-invert max-w-none">
-                          <p className="text-gray-300 leading-relaxed">{subtopic.content}</p>
+                    {topic.subtopics.map((subtopic, subtopicIndex) => {
+                      const isRelevant = subtopic.id === relevantTopicId;
+                      return (
+                        <div 
+                          key={subtopic.id} 
+                          id={subtopic.id}
+                          className={`rounded-lg p-6 transition-all duration-300 ${
+                            isRelevant 
+                              ? 'bg-gradient-to-br from-blue-900/40 to-purple-900/40 border-2 border-blue-500 shadow-lg shadow-blue-500/20' 
+                              : 'bg-gray-800/30 border border-gray-700'
+                          }`}
+                        >
+                          <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-3">
+                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                              isRelevant ? 'bg-blue-500 animate-pulse-subtle' : 'bg-blue-600'
+                            }`}>
+                              {topicIndex + 1}.{subtopicIndex + 1}
+                            </span>
+                            {subtopic.title}
+                            {isRelevant && (
+                              <span className="ml-2 px-3 py-1 bg-blue-500/30 text-blue-300 text-xs rounded-full border border-blue-500/50">
+                                📍 Current Tab
+                              </span>
+                            )}
+                          </h3>
+                          <div className="prose prose-invert max-w-none">
+                            <p className="text-gray-300 leading-relaxed">{subtopic.content}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 

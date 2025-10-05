@@ -61,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ status, onRestartTour, onStartGuidedTou
         </div>
       </header>
 
-      <HelpSystem isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <HelpSystem isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} currentTab={currentTab} />
     </>
   );
 };
