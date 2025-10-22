@@ -730,7 +730,14 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                             <>
                               <p className="text-xs text-slate-400 mb-3">
                                 Pattern matching in layers{' '}
-                                {circuitData.explanation.match(/layers (\d+-\d+)/)?.[1] || 'multiple'}
+                                {(() => {
+                                  const inductionDetails = analysisData?.icl_metrics?.induction_details || [];
+                                  if (inductionDetails.length > 0) {
+                                    const layers = inductionDetails.map((h: any) => h.layer);
+                                    return `${Math.min(...layers)}-${Math.max(...layers)}`;
+                                  }
+                                  return 'multiple';
+                                })()}
                               </p>
                               <div className="bg-slate-700/50 rounded p-3">
                                 <div className="flex justify-between items-center text-xs mb-1">
@@ -779,7 +786,14 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({ analysisData, f
                             <div className="text-center">
                               <div className="bg-purple-500/20 border-2 border-purple-500 rounded-lg p-2 mb-1">
                                 <div className="text-purple-400 font-bold text-xs">
-                                  Layers {circuitData.explanation.match(/layers (\d+-\d+)/)?.[1] || '?'}
+                                  Layers {(() => {
+                                    const inductionDetails = analysisData?.icl_metrics?.induction_details || [];
+                                    if (inductionDetails.length > 0) {
+                                      const layers = inductionDetails.map((h: any) => h.layer);
+                                      return `${Math.min(...layers)}-${Math.max(...layers)}`;
+                                    }
+                                    return '?';
+                                  })()}
                                 </div>
                                 <div className="text-slate-300 text-xs mt-1">Induction</div>
                               </div>

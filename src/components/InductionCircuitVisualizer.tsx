@@ -25,12 +25,18 @@ interface InductionCircuitVisualizerProps {
   circuit: InductionCircuit | null;
   inductionHeads: number;
   inductionScore: number;
+  inductionDetails?: Array<{
+    layer: number;
+    head: number;
+    score: number;
+  }>;
 }
 
 const InductionCircuitVisualizer: React.FC<InductionCircuitVisualizerProps> = ({ 
   circuit, 
   inductionHeads, 
-  inductionScore 
+  inductionScore,
+  inductionDetails = []
 }) => {
   if (!circuit) {
     return (
@@ -49,8 +55,13 @@ const InductionCircuitVisualizer: React.FC<InductionCircuitVisualizerProps> = ({
       })()
     : 'none';
   
-  // Extract explanation for induction layer range (backend provides this)
-  const inductionLayerRange = circuit.explanation.match(/layers (\d+-\d+)/)?.[1] || 'unknown';
+  // Calculate induction layer range directly from actual detected heads
+  const inductionLayerRange = inductionDetails.length > 0
+    ? (() => {
+        const layers = inductionDetails.map(h => h.layer);
+        return `${Math.min(...layers)}-${Math.max(...layers)}`;
+      })()
+    : 'unknown';
 
   const getStrengthColor = (strength: string) => {
     switch (strength) {
@@ -279,4 +290,3 @@ const InductionCircuitVisualizer: React.FC<InductionCircuitVisualizerProps> = ({
 };
 
 export default InductionCircuitVisualizer;
-
